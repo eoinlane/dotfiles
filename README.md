@@ -42,7 +42,8 @@ The bootstrap script will:
 | `gpl`     | `git pull`                              |
 | `gl`      | `git log --oneline --graph --decorate`  |
 | `gb`      | `git branch`                            |
-| `ll`/`la` | `ls -la`                                |
+| `ll`/`la` | `eza -la --icons` (fallback: `ls -la`)  |
+| `lt`      | `eza --tree --icons`                    |
 | `ubuntu`  | `ssh eoin@nvidiaubuntubox`              |
 | `kb-sync` | `~/.local/bin/sync-knowledge-base.sh`   |
 | `kb-build`| `~/.local/bin/rebuild-knowledge-base.sh`|

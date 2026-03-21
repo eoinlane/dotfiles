@@ -51,6 +51,32 @@ install_starship() {
 }
 
 # ---------------------------------------------------------------------------
+# Install eza
+# ---------------------------------------------------------------------------
+install_eza() {
+    if command -v eza &>/dev/null; then
+        echo "==> eza already installed: $(command -v eza)"
+        return
+    fi
+    echo "==> Installing eza..."
+    case "$OS" in
+        Darwin)
+            brew install eza
+            ;;
+        Linux)
+            if command -v apt &>/dev/null; then
+                sudo apt update && sudo apt install -y eza
+            else
+                echo "WARN: Cannot install eza — install manually via cargo or GitHub releases." >&2
+            fi
+            ;;
+        FreeBSD)
+            sudo pkg install -y eza
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
 # Symlink config.fish
 # ---------------------------------------------------------------------------
 link_config() {
@@ -92,6 +118,7 @@ set_default_shell() {
 # ---------------------------------------------------------------------------
 install_fish
 install_starship
+install_eza
 link_config
 set_default_shell
 

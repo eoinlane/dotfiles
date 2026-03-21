@@ -27,9 +27,15 @@ if status is-interactive
     abbr -a gl   'git log --oneline --graph --decorate'
     abbr -a gb   git branch
 
-    # Filesystem
-    abbr -a ll   'ls -la'
-    abbr -a la   'ls -la'
+    # Filesystem (eza if available, fallback to ls)
+    if command -v eza &>/dev/null
+        abbr -a ll  'eza -la --icons'
+        abbr -a la  'eza -la --icons'
+        abbr -a lt  'eza --tree --icons'
+    else
+        abbr -a ll  'ls -la'
+        abbr -a la  'ls -la'
+    end
 
     # SSH
     abbr -a ubuntu 'ssh eoin@nvidiaubuntubox'
