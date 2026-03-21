@@ -1,3 +1,4 @@
+if vim.fn.has('mac') == 0 then return end
 
 require("codesnap").setup({
   border = "rounded",

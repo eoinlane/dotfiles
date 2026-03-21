@@ -24,6 +24,7 @@ require('lazy').setup({
   {
     "mistricky/codesnap.nvim",
     build = "make",
+    cond = function() return vim.fn.has('mac') == 1 end,
   },
   {
     "NeogitOrg/neogit",
