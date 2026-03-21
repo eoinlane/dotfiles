@@ -59,7 +59,8 @@ require('mason').setup()
 -- Feel free to add/remove any LSPs that you want here. They will automatically be installed
 -- Only include servers whose required runtimes are available
 local function has(bin) return vim.fn.executable(bin) == 1 end
-local servers = { 'clangd', 'lua_ls' }
+local servers = { 'lua_ls' }
+if has('clangd') or vim.fn.has('mac') == 1 then table.insert(servers, 'clangd') end
 if has('node') then
   table.insert(servers, 'ts_ls')
   table.insert(servers, 'pyright')
