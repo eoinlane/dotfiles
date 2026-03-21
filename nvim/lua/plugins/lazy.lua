@@ -48,6 +48,7 @@ require('lazy').setup({
     cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
     ft = { "markdown" },
     build = function() vim.fn["mkdp#util#install"]() end,
+    cond = function() return vim.fn.executable("node") == 1 end,
   },
   "preservim/vim-pencil",
   {
