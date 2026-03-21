@@ -14,6 +14,9 @@ if status is-interactive
     # Starship prompt
     starship init fish | source
 
+    # Zoxide (smart cd)
+    zoxide init fish | source
+
     # --- Abbreviations (expand as you type) ---
 
     # Git
@@ -36,6 +39,9 @@ if status is-interactive
         abbr -a ll  'ls -la'
         abbr -a la  'ls -la'
     end
+
+    # Navigation
+    abbr -a cd  z
 
     # SSH
     abbr -a ubuntu 'ssh eoin@nvidiaubuntubox'

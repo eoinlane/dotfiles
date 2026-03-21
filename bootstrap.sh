@@ -51,6 +51,32 @@ install_starship() {
 }
 
 # ---------------------------------------------------------------------------
+# Install zoxide
+# ---------------------------------------------------------------------------
+install_zoxide() {
+    if command -v zoxide &>/dev/null; then
+        echo "==> zoxide already installed: $(command -v zoxide)"
+        return
+    fi
+    echo "==> Installing zoxide..."
+    case "$OS" in
+        Darwin)
+            brew install zoxide
+            ;;
+        Linux)
+            if command -v apt &>/dev/null; then
+                sudo apt update && sudo apt install -y zoxide
+            else
+                echo "WARN: Cannot install zoxide — install manually via cargo or https://github.com/ajeetdsouza/zoxide" >&2
+            fi
+            ;;
+        FreeBSD)
+            sudo pkg install -y zoxide
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
 # Install eza
 # ---------------------------------------------------------------------------
 install_eza() {
@@ -118,6 +144,7 @@ set_default_shell() {
 # ---------------------------------------------------------------------------
 install_fish
 install_starship
+install_zoxide
 install_eza
 link_config
 set_default_shell
