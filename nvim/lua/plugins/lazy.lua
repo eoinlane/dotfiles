@@ -17,6 +17,11 @@ vim.o.termguicolors = true
 
 require('lazy').setup({
   {
+    'goolord/alpha-nvim',
+    dependencies = { 'nvim-tree/nvim-web-devicons' },
+    event = 'VimEnter',
+  },
+  {
     "ThePrimeagen/harpoon",
     branch = "harpoon2",
     dependencies = { "nvim-lua/plenary.nvim" }
