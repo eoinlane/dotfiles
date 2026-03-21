@@ -1,10 +1,11 @@
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
-require('nvim-treesitter.configs').setup {
-  -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 
-    'go', 'lua', 'python', 'rust', 'typescript', 'regex', 
-    'bash', 'markdown', 'markdown_inline', 'kdl', 'sql', 'org', 'terraform',
+local ok, configs = pcall(require, 'nvim-treesitter.configs')
+if not ok then return end
+configs.setup {
+  ensure_installed = {
+    'go', 'lua', 'python', 'rust', 'typescript', 'regex',
+    'bash', 'markdown', 'markdown_inline', 'sql', 'terraform',
     'html', 'css', 'javascript', 'yaml', 'json', 'toml',
   },
 
