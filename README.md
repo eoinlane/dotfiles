@@ -1,10 +1,11 @@
 # dotfiles
 
-Personal shell configuration for macOS, Ubuntu, and FreeBSD.
+Personal configuration for macOS, Ubuntu, and FreeBSD.
 
 ## Contents
 
-- **`fish/config.fish`** — Fish shell config with Starship prompt, git abbreviations, and platform-specific setup
+- **`fish/config.fish`** — Fish shell config with Starship prompt and git abbreviations
+- **`nvim/`** — Neovim configuration (lazy.nvim, LSP, Go, AI, and more)
 - **`bootstrap.sh`** — One-command install script
 
 ## Quick Start
@@ -19,7 +20,55 @@ The bootstrap script will:
 1. Install [fish](https://fishshell.com/) via the appropriate package manager
 2. Install [Starship](https://starship.rs/) prompt
 3. Symlink `fish/config.fish` to `~/.config/fish/config.fish`
-4. Set fish as your default shell
+4. Symlink `nvim/` to `~/.config/nvim`
+5. Set fish as your default shell
+
+Then open Neovim and run `:Lazy sync` to install all plugins.
+
+## Neovim
+
+Requires Neovim 0.9+. Plugin manager: [lazy.nvim](https://github.com/folke/lazy.nvim).
+
+### Plugins
+
+| Category | Plugin | Purpose |
+|----------|--------|---------|
+| **AI** | codecompanion.nvim | Claude-powered chat + inline edits (`<leader>cc`) |
+| **Files** | oil.nvim | Edit filesystem like a buffer (`-`) |
+| **Navigation** | flash.nvim | 2-char jump motions (`s`) |
+| **Navigation** | harpoon2 | File bookmarks (`<leader>m`) |
+| **Navigation** | telescope.nvim | Fuzzy finder (`<leader>sf`, `<leader>sg`) |
+| **LSP** | nvim-lspconfig + mason | Auto-install language servers |
+| **Formatting** | conform.nvim | Format on save (Go, Lua, Python, JS, etc.) |
+| **Git** | neogit + gitsigns + diffview | Full git workflow |
+| **Go** | go.nvim + nvim-dap-go | Go dev + debugging |
+| **Writing** | obsidian.nvim + zen-mode | Obsidian vault + distraction-free mode |
+| **UI** | which-key.nvim | Keymap discovery popup |
+| **UI** | noice.nvim + lualine | Better UI + statusline |
+| **Sessions** | auto-session | Auto save/restore sessions per directory |
+
+### Key bindings (highlights)
+
+| Key | Action |
+|-----|--------|
+| `-` | Open oil (file browser) |
+| `s` | Flash jump |
+| `<leader>cc` | CodeCompanion chat |
+| `<leader>ci` | CodeCompanion inline |
+| `<leader>sf` | Telescope: find files |
+| `<leader>sg` | Telescope: live grep |
+| `<leader>m` | Harpoon: add file |
+| `<leader>ht` | Harpoon: toggle menu |
+| `<leader>cf` | Format buffer |
+| `jj` | Exit insert mode |
+
+### CodeCompanion setup
+
+Set your Anthropic API key in your environment:
+
+```bash
+export ANTHROPIC_API_KEY=your_key_here
+```
 
 ## Platform support
 
@@ -29,7 +78,7 @@ The bootstrap script will:
 | Ubuntu  | apt             |
 | FreeBSD | pkg             |
 
-## Abbreviations
+## Fish abbreviations
 
 | Abbr      | Expands to                              |
 |-----------|-----------------------------------------|

@@ -140,6 +140,23 @@ set_default_shell() {
 }
 
 # ---------------------------------------------------------------------------
+# Symlink nvim config
+# ---------------------------------------------------------------------------
+link_nvim() {
+    mkdir -p ~/.config
+    local target="$DOTFILES_DIR/nvim"
+    local link="$HOME/.config/nvim"
+
+    if [ -d "$link" ] && [ ! -L "$link" ]; then
+        echo "==> Backing up existing nvim config to nvim.bak"
+        mv "$link" "${link}.bak"
+    fi
+
+    ln -sfn "$target" "$link"
+    echo "==> Linked $link -> $target"
+}
+
+# ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
 install_fish
@@ -147,7 +164,9 @@ install_starship
 install_zoxide
 install_eza
 link_config
+link_nvim
 set_default_shell
 
 echo ""
 echo "==> Done! Start a new shell or run: exec fish"
+echo "==> Open nvim and run :Lazy sync to install plugins"
