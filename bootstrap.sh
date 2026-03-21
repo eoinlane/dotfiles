@@ -103,6 +103,36 @@ install_eza() {
 }
 
 # ---------------------------------------------------------------------------
+# Install neovim
+# ---------------------------------------------------------------------------
+install_nvim() {
+    if command -v nvim &>/dev/null; then
+        echo "==> nvim already installed: $(command -v nvim)"
+        return
+    fi
+    echo "==> Installing nvim..."
+    case "$OS" in
+        Darwin)
+            brew install neovim
+            ;;
+        Linux)
+            if command -v snap &>/dev/null; then
+                sudo snap install nvim --classic
+            elif command -v apt &>/dev/null; then
+                # apt version is too old; install via snap or AppImage
+                echo "WARN: apt neovim is outdated. Installing via snap..."
+                sudo apt install -y snapd && sudo snap install nvim --classic
+            else
+                echo "WARN: Cannot install nvim — install manually from https://github.com/neovim/neovim/releases" >&2
+            fi
+            ;;
+        FreeBSD)
+            sudo pkg install -y neovim
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
 # Symlink config.fish
 # ---------------------------------------------------------------------------
 link_config() {
@@ -163,6 +193,7 @@ install_fish
 install_starship
 install_zoxide
 install_eza
+install_nvim
 link_config
 link_nvim
 set_default_shell
