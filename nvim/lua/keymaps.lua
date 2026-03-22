@@ -45,3 +45,9 @@ vim.keymap.set('n', '<leader>nn', ':Noice dismiss<CR>', { noremap = true })
 
 -- Go: insert error check
 vim.keymap.set('n', '<leader>ee', '<cmd>GoIfErr<cr>', { silent = true, noremap = true })
+
+-- CodeCompanion (lazy-loaded, keymaps available immediately)
+vim.keymap.set('n', '<leader>cc', '<cmd>CodeCompanionChat<cr>', { desc = 'CodeCompanion Chat' })
+vim.keymap.set('v', '<leader>cc', '<cmd>CodeCompanionChat Add<cr>', { desc = 'Add to Chat' })
+vim.keymap.set({ 'n', 'v' }, '<leader>ci', '<cmd>CodeCompanion<cr>', { desc = 'CodeCompanion Inline' })
+vim.keymap.set('n', '<leader>cA', '<cmd>CodeCompanionActions<cr>', { desc = 'CodeCompanion Actions' })
