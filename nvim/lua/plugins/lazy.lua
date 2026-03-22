@@ -20,6 +20,39 @@ require('lazy').setup({
     'akinsho/toggleterm.nvim',
     version = '*',
     event = 'VeryLazy',
+    config = function()
+      require('toggleterm').setup({
+        size = function(term)
+          if term.direction == 'horizontal' then return 15
+          elseif term.direction == 'vertical' then return math.floor(vim.o.columns * 0.45)
+          end
+        end,
+        open_mapping = [[<C-t>]],
+        shade_terminals = false,
+        direction = 'vertical',
+        close_on_exit = true,
+        shell = vim.o.shell,
+        float_opts = { border = 'curved', winblend = 3 },
+      })
+
+      -- <C-hjkl> and <Esc> work inside any toggleterm terminal
+      vim.api.nvim_create_autocmd('TermOpen', {
+        pattern = 'term://*toggleterm*',
+        callback = function()
+          local opts = { buffer = 0 }
+          vim.keymap.set('t', '<C-h>', '<cmd>wincmd h<CR>', opts)
+          vim.keymap.set('t', '<C-j>', '<cmd>wincmd j<CR>', opts)
+          vim.keymap.set('t', '<C-k>', '<cmd>wincmd k<CR>', opts)
+          vim.keymap.set('t', '<C-l>', '<cmd>wincmd l<CR>', opts)
+          vim.keymap.set('t', '<Esc>', '<C-\\><C-n>', opts)
+        end,
+      })
+
+      -- Dedicated persistent Claude terminal
+      local Terminal = require('toggleterm.terminal').Terminal
+      local claude = Terminal:new({ cmd = 'claude', direction = 'vertical', id = 2 })
+      vim.keymap.set('n', '<leader>tc', function() claude:toggle() end, { desc = 'Toggle Claude terminal' })
+    end,
   },
   {
     'goolord/alpha-nvim',

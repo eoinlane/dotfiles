@@ -21,6 +21,5 @@ require('plugins.conform')
 require('plugins.flash')
 require('plugins.session')
 require('plugins.dashboard')
-require('plugins.toggleterm')
 
 -- vim: ts=8 sts=2 sw=2 et
