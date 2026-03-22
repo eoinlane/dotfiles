@@ -39,11 +39,11 @@ require('lazy').setup({
         pattern = 'term://*toggleterm*',
         callback = function()
           local opts = { buffer = 0 }
-          vim.keymap.set('t', '<C-h>', '<cmd>wincmd h<CR>', opts)
-          vim.keymap.set('t', '<C-j>', '<cmd>wincmd j<CR>', opts)
-          vim.keymap.set('t', '<C-k>', '<cmd>wincmd k<CR>', opts)
-          vim.keymap.set('t', '<C-l>', '<cmd>wincmd l<CR>', opts)
-          vim.keymap.set('t', '<C-n>', '<C-\\><C-n>', opts)  -- exit terminal mode
+          -- Jump directly to nvim pane without needing to exit terminal mode first
+          vim.keymap.set('t', '<C-h>', '<C-\\><C-n><cmd>wincmd h<CR>', opts)
+          vim.keymap.set('t', '<C-j>', '<C-\\><C-n><cmd>wincmd j<CR>', opts)
+          vim.keymap.set('t', '<C-k>', '<C-\\><C-n><cmd>wincmd k<CR>', opts)
+          vim.keymap.set('t', '<C-l>', '<C-\\><C-n><cmd>wincmd l<CR>', opts)
         end,
       })
 
