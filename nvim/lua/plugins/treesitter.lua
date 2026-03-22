@@ -5,7 +5,7 @@ if not ok then return end
 configs.setup {
   ensure_installed = {
     'go', 'lua', 'python', 'rust', 'typescript', 'regex',
-    'bash', 'markdown', 'markdown_inline', 'sql', 'terraform',
+    'bash', 'markdown', 'markdown_inline', 'sql',
     'html', 'css', 'javascript', 'yaml', 'json', 'toml',
   },
 
