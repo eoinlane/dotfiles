@@ -17,60 +17,6 @@ vim.o.termguicolors = true
 
 require('lazy').setup({
   {
-    'akinsho/toggleterm.nvim',
-    version = '*',
-    event = 'VeryLazy',
-    config = function()
-      require('toggleterm').setup({
-        size = function(term)
-          if term.direction == 'horizontal' then return 15
-          elseif term.direction == 'vertical' then return math.floor(vim.o.columns * 0.45)
-          end
-        end,
-        shade_terminals = false,
-        direction = 'vertical',
-        close_on_exit = true,
-        shell = vim.o.shell,
-        float_opts = { border = 'curved', winblend = 3 },
-      })
-
-      -- Window navigation from inside terminal
-      vim.api.nvim_create_autocmd('TermOpen', {
-        pattern = 'term://*toggleterm*',
-        callback = function()
-          local opts = { buffer = 0 }
-          -- Ctrl+W hjkl navigates splits from terminal (nvim intercepts Ctrl+W)
-          vim.keymap.set('t', '<C-w>h', '<C-\\><C-n><cmd>wincmd h<CR>', opts)
-          vim.keymap.set('t', '<C-w>j', '<C-\\><C-n><cmd>wincmd j<CR>', opts)
-          vim.keymap.set('t', '<C-w>k', '<C-\\><C-n><cmd>wincmd k<CR>', opts)
-          vim.keymap.set('t', '<C-w>l', '<C-\\><C-n><cmd>wincmd l<CR>', opts)
-          vim.keymap.set('t', '<C-w>w', '<C-\\><C-n><cmd>wincmd w<CR>', opts)
-        end,
-      })
-
-      -- General terminal toggle
-      vim.keymap.set('n', '<leader>tt', '<cmd>ToggleTerm<CR>', { desc = 'Toggle terminal' })
-
-      -- Dedicated persistent Claude terminal — auto-enters insert mode on focus
-      local Terminal = require('toggleterm.terminal').Terminal
-      local claude = Terminal:new({
-        cmd = 'claude',
-        direction = 'vertical',
-        id = 2,
-        on_open = function() vim.cmd('startinsert!') end,
-      })
-
-      -- <leader>tc from nvim opens Claude and lands in insert mode ready to type
-      vim.keymap.set('n', '<leader>tc', function() claude:toggle() end, { desc = 'Toggle Claude terminal' })
-
-      -- <C-w>c from nvim jumps straight into the Claude terminal
-      vim.keymap.set('n', '<C-w>c', function()
-        claude:open()
-        vim.cmd('startinsert!')
-      end, { desc = 'Focus Claude terminal' })
-    end,
-  },
-  {
     'goolord/alpha-nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     event = 'VimEnter',
