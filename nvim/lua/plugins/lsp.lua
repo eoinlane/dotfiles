@@ -59,7 +59,10 @@ require('mason').setup()
 -- Feel free to add/remove any LSPs that you want here. They will automatically be installed
 -- Only include servers whose required runtimes are available
 local function has(bin) return vim.fn.executable(bin) == 1 end
-local servers = { 'lua_ls' }
+local is_freebsd = vim.uv.os_uname().sysname == 'FreeBSD'
+
+-- Mason has no FreeBSD binaries; on FreeBSD install LSPs via pkg instead
+local servers = is_freebsd and {} or { 'lua_ls' }
 if has('clangd') or vim.fn.has('mac') == 1 then table.insert(servers, 'clangd') end
 if has('node') then
   table.insert(servers, 'ts_ls')
