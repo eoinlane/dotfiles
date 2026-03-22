@@ -127,7 +127,7 @@ install_nvim() {
             fi
             ;;
         FreeBSD)
-            sudo pkg install -y neovim
+            sudo pkg install -y neovim gmake
             ;;
     esac
 }

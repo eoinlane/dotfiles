@@ -71,7 +71,7 @@ require('lazy').setup({
     cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
     ft = { "markdown" },
     build = function() vim.fn["mkdp#util#install"]() end,
-    cond = function() return vim.fn.executable("node") == 1 end,
+    cond = function() return vim.fn.has('mac') == 1 and vim.fn.executable("node") == 1 end,
   },
   "preservim/vim-pencil",
   {
@@ -306,7 +306,11 @@ require('lazy').setup({
   { 'nvim-telescope/telescope.nvim', branch = '0.1.x', dependencies = { 'nvim-lua/plenary.nvim' } },
   'nvim-telescope/telescope-symbols.nvim',
   -- Fuzzy Finder Algorithm which requires local dependencies to be built. Only load if `make` is available
-  { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make', cond = vim.fn.executable 'make' == 1 },
+  {
+    'nvim-telescope/telescope-fzf-native.nvim',
+    build = vim.uv.os_uname().sysname == 'FreeBSD' and 'gmake' or 'make',
+    cond = vim.fn.executable('make') == 1 or vim.fn.executable('gmake') == 1,
+  },
   {
     "folke/twilight.nvim",
     ft = "markdown",
