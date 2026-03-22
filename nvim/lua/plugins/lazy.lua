@@ -43,6 +43,7 @@ require('lazy').setup({
   },
   {
     'olimorris/codecompanion.nvim',
+    cmd = { 'CodeCompanion', 'CodeCompanionChat', 'CodeCompanionActions' },
     dependencies = {
       'nvim-lua/plenary.nvim',
       'nvim-treesitter/nvim-treesitter',
