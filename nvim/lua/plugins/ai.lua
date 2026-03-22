@@ -1,4 +1,7 @@
-require('codecompanion').setup({
+local ok, codecompanion = pcall(require, 'codecompanion')
+if not ok then return end
+
+codecompanion.setup({
   adapters = {
     anthropic = function()
       return require('codecompanion.adapters').extend('anthropic', {
