@@ -69,8 +69,10 @@ if has('go') then table.insert(servers, 'gopls') end
 if has('rustc') then table.insert(servers, 'rust_analyzer') end
 
 -- Ensure the servers above are installed
+-- automatic_enable=false: we manually call lspconfig setup below
 require('mason-lspconfig').setup {
   ensure_installed = servers,
+  automatic_enable = false,
 }
 
 -- nvim-cmp supports additional completion capabilities
