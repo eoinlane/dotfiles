@@ -39,21 +39,35 @@ require('lazy').setup({
         pattern = 'term://*toggleterm*',
         callback = function()
           local opts = { buffer = 0 }
-          -- Jump directly to nvim pane without needing to exit terminal mode first
-          vim.keymap.set('t', '<C-h>', '<C-\\><C-n><cmd>wincmd h<CR>', opts)
-          vim.keymap.set('t', '<C-j>', '<C-\\><C-n><cmd>wincmd j<CR>', opts)
-          vim.keymap.set('t', '<C-k>', '<C-\\><C-n><cmd>wincmd k<CR>', opts)
-          vim.keymap.set('t', '<C-l>', '<C-\\><C-n><cmd>wincmd l<CR>', opts)
+          -- Ctrl+W hjkl navigates splits from terminal (nvim intercepts Ctrl+W)
+          vim.keymap.set('t', '<C-w>h', '<C-\\><C-n><cmd>wincmd h<CR>', opts)
+          vim.keymap.set('t', '<C-w>j', '<C-\\><C-n><cmd>wincmd j<CR>', opts)
+          vim.keymap.set('t', '<C-w>k', '<C-\\><C-n><cmd>wincmd k<CR>', opts)
+          vim.keymap.set('t', '<C-w>l', '<C-\\><C-n><cmd>wincmd l<CR>', opts)
+          vim.keymap.set('t', '<C-w>w', '<C-\\><C-n><cmd>wincmd w<CR>', opts)
         end,
       })
 
       -- General terminal toggle
       vim.keymap.set('n', '<leader>tt', '<cmd>ToggleTerm<CR>', { desc = 'Toggle terminal' })
 
-      -- Dedicated persistent Claude terminal
+      -- Dedicated persistent Claude terminal — auto-enters insert mode on focus
       local Terminal = require('toggleterm.terminal').Terminal
-      local claude = Terminal:new({ cmd = 'claude', direction = 'vertical', id = 2 })
+      local claude = Terminal:new({
+        cmd = 'claude',
+        direction = 'vertical',
+        id = 2,
+        on_open = function() vim.cmd('startinsert!') end,
+      })
+
+      -- <leader>tc from nvim opens Claude and lands in insert mode ready to type
       vim.keymap.set('n', '<leader>tc', function() claude:toggle() end, { desc = 'Toggle Claude terminal' })
+
+      -- <C-w>c from nvim jumps straight into the Claude terminal
+      vim.keymap.set('n', '<C-w>c', function()
+        claude:open()
+        vim.cmd('startinsert!')
+      end, { desc = 'Focus Claude terminal' })
     end,
   },
   {
