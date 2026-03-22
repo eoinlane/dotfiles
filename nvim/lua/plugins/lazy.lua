@@ -17,6 +17,11 @@ vim.o.termguicolors = true
 
 require('lazy').setup({
   {
+    'akinsho/toggleterm.nvim',
+    version = '*',
+    event = 'VeryLazy',
+  },
+  {
     'goolord/alpha-nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     event = 'VimEnter',
