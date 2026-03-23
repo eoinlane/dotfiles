@@ -1,0 +1,78 @@
+configuration {
+    modi: "drun,run,window";
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    font: "Noto Sans 12";
+    display-drun: "Apps";
+    display-run: "Run";
+    display-window: "Windows";
+    drun-display-format: "{name}";
+    terminal: "xfce4-terminal";
+}
+
+@theme "/dev/null"
+
+* {
+    bg:       #2d3436;
+    bg-alt:   #353b48;
+    fg:       #c0c5ce;
+    fg-alt:   #808e9b;
+    accent:   #2eb398;
+    urgent:   #bf616a;
+
+    background-color: @bg;
+    text-color:       @fg;
+}
+
+window {
+    width:            500px;
+    border:           2px;
+    border-color:     @accent;
+    border-radius:    8px;
+    padding:          0;
+}
+
+mainbox {
+    padding:  0;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    padding:          12px;
+    background-color: @bg-alt;
+    children:         [ prompt, entry ];
+    spacing:          8px;
+}
+
+prompt {
+    text-color: @accent;
+}
+
+entry {
+    placeholder:       "Search...";
+    placeholder-color: @fg-alt;
+}
+
+listview {
+    lines:    8;
+    padding:  4px 0;
+    scrollbar: false;
+}
+
+element {
+    padding: 8px 12px;
+}
+
+element selected {
+    background-color: @accent;
+    text-color:       @bg;
+}
+
+element-icon {
+    size: 24px;
+    margin: 0 8px 0 0;
+}
+
+element-text {
+    vertical-align: 0.5;
+}

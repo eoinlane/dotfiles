@@ -1,0 +1,48 @@
+# Starship prompt — dark teal minimal theme
+# Single-line, compact layout
+
+format = """$directory$git_branch$git_status$cmd_duration$character"""
+
+# Prompt character
+[character]
+success_symbol = "[>](bold #5fafaf)"
+error_symbol = "[>](bold red)"
+
+# Directory
+[directory]
+style = "bold #5fafaf"
+truncation_length = 3
+truncate_to_repo = true
+
+# Git branch
+[git_branch]
+format = "[$symbol$branch]($style) "
+style = "#4e9a9a"
+symbol = " "
+
+# Git status (compact indicators)
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+style = "#6ec6c6"
+conflicted = "="
+ahead = "^"
+behind = "v"
+diverged = "^v"
+untracked = "?"
+stashed = "$"
+modified = "!"
+staged = "+"
+renamed = "r"
+deleted = "x"
+
+# Command duration (show if > 2s)
+[cmd_duration]
+min_time = 2000
+format = "[$duration]($style) "
+style = "#3d8a8a"
+
+# Shell indicator
+[shell]
+disabled = false
+fish_indicator = ""
+format = "$indicator "

@@ -1,0 +1,6 @@
+# Include the default config
+.include /usr/local/etc/pulse/default.pa
+
+# Load xrdp audio sink and source for RDP sound redirection
+load-module module-xrdp-sink
+load-module module-xrdp-source

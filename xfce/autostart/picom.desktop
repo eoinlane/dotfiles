@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Picom
+Comment=Compositor for window shadows
+Exec=picom --config /home/eoin/.config/picom/picom.conf
+Hidden=false
+X-GNOME-Autostart-enabled=true

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Mount MyMedia
+Comment=Mount SMB share from Raspberry Pi
+Exec=/home/eoin/.local/bin/mount-mymedia.sh
+Hidden=false
+X-GNOME-Autostart-enabled=true
