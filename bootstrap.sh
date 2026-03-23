@@ -136,14 +136,23 @@ install_nvim() {
 # Install JetBrainsMono Nerd Font
 # ---------------------------------------------------------------------------
 install_nerd_font() {
-    echo "==> Installing JetBrainsMono Nerd Font..."
     case "$OS" in
         Darwin)
+            if brew list --cask font-jetbrains-mono-nerd-font &>/dev/null; then
+                echo "==> JetBrainsMono Nerd Font already installed"
+                return
+            fi
+            echo "==> Installing JetBrainsMono Nerd Font..."
             brew install --cask font-jetbrains-mono-nerd-font
             ;;
         Linux)
+            if fc-list | grep -qi "JetBrainsMono"; then
+                echo "==> JetBrainsMono Nerd Font already installed"
+                return
+            fi
             local font_dir="$HOME/.local/share/fonts"
             local zip="/tmp/JetBrainsMono.zip"
+            echo "==> Installing JetBrainsMono Nerd Font..."
             mkdir -p "$font_dir"
             curl -fLo "$zip" \
                 https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
@@ -153,8 +162,13 @@ install_nerd_font() {
             echo "==> Font installed — set JetBrainsMono Nerd Font in your terminal"
             ;;
         FreeBSD)
+            if fc-list | grep -qi "JetBrainsMono"; then
+                echo "==> JetBrainsMono Nerd Font already installed"
+                return
+            fi
             local font_dir="$HOME/.local/share/fonts"
             local zip="/tmp/JetBrainsMono.zip"
+            echo "==> Installing JetBrainsMono Nerd Font..."
             mkdir -p "$font_dir"
             fetch -o "$zip" \
                 https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
