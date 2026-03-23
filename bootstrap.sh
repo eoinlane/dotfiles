@@ -133,6 +133,40 @@ install_nvim() {
 }
 
 # ---------------------------------------------------------------------------
+# Install JetBrainsMono Nerd Font
+# ---------------------------------------------------------------------------
+install_nerd_font() {
+    echo "==> Installing JetBrainsMono Nerd Font..."
+    case "$OS" in
+        Darwin)
+            brew install --cask font-jetbrains-mono-nerd-font
+            ;;
+        Linux)
+            local font_dir="$HOME/.local/share/fonts"
+            local zip="/tmp/JetBrainsMono.zip"
+            mkdir -p "$font_dir"
+            curl -fLo "$zip" \
+                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+            unzip -o "$zip" -d "$font_dir/JetBrainsMono" '*.ttf'
+            fc-cache -f "$font_dir"
+            rm "$zip"
+            echo "==> Font installed — set JetBrainsMono Nerd Font in your terminal"
+            ;;
+        FreeBSD)
+            local font_dir="$HOME/.local/share/fonts"
+            local zip="/tmp/JetBrainsMono.zip"
+            mkdir -p "$font_dir"
+            fetch -o "$zip" \
+                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+            unzip -o "$zip" -d "$font_dir/JetBrainsMono" '*.ttf'
+            fc-cache -f "$font_dir"
+            rm "$zip"
+            echo "==> Font installed — set JetBrainsMono Nerd Font in your terminal"
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
 # Symlink config.fish
 # ---------------------------------------------------------------------------
 link_config() {
@@ -194,6 +228,7 @@ install_starship
 install_zoxide
 install_eza
 install_nvim
+install_nerd_font
 link_config
 link_nvim
 set_default_shell
