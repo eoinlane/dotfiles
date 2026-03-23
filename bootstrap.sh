@@ -135,6 +135,16 @@ install_nvim() {
 # ---------------------------------------------------------------------------
 # Install JetBrainsMono Nerd Font
 # ---------------------------------------------------------------------------
+install_alacritty() {
+    if [ "$OS" != "Darwin" ]; then return; fi
+    if command -v alacritty &>/dev/null; then
+        echo "==> alacritty already installed"
+        return
+    fi
+    echo "==> Installing alacritty..."
+    brew install --cask alacritty
+}
+
 install_nerd_font() {
     case "$OS" in
         Darwin)
@@ -218,6 +228,24 @@ set_default_shell() {
 }
 
 # ---------------------------------------------------------------------------
+# Symlink alacritty config (macOS only)
+# ---------------------------------------------------------------------------
+link_alacritty() {
+    if [ "$OS" != "Darwin" ]; then return; fi
+    mkdir -p ~/.config/alacritty
+    local target="$DOTFILES_DIR/alacritty/alacritty.toml"
+    local link="$HOME/.config/alacritty/alacritty.toml"
+
+    if [ -f "$link" ] && [ ! -L "$link" ]; then
+        echo "==> Backing up existing alacritty.toml to alacritty.toml.bak"
+        mv "$link" "${link}.bak"
+    fi
+
+    ln -sf "$target" "$link"
+    echo "==> Linked $link -> $target"
+}
+
+# ---------------------------------------------------------------------------
 # Symlink nvim config
 # ---------------------------------------------------------------------------
 link_nvim() {
@@ -242,9 +270,11 @@ install_starship
 install_zoxide
 install_eza
 install_nvim
+install_alacritty
 install_nerd_font
 link_config
 link_nvim
+link_alacritty
 set_default_shell
 
 echo ""
