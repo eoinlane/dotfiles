@@ -1,0 +1,26 @@
+#!/bin/sh
+
+file="$1"
+w="$2"
+h="$3"
+
+case "$(file --mime-type -Lb "$file")" in
+    text/*|application/json|application/javascript|application/xml)
+        bat --color=always --style=plain --paging=never --terminal-width="$w" "$file"
+        ;;
+    image/*)
+        chafa -f sixel -s "${w}x${h}" --animate off "$file"
+        ;;
+    application/pdf)
+        pdftotext "$file" -
+        ;;
+    application/zip|application/gzip|application/x-tar|application/x-compressed-tar)
+        tar tf "$file" 2>/dev/null || unzip -l "$file" 2>/dev/null
+        ;;
+    video/*|audio/*)
+        mediainfo "$file" 2>/dev/null || file "$file"
+        ;;
+    *)
+        file "$file"
+        ;;
+esac

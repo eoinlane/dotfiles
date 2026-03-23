@@ -191,6 +191,55 @@ install_nerd_font() {
 }
 
 # ---------------------------------------------------------------------------
+# Install lf + preview dependencies
+# ---------------------------------------------------------------------------
+install_lf() {
+    if command -v lf &>/dev/null; then
+        echo "==> lf already installed: $(command -v lf)"
+        return
+    fi
+    echo "==> Installing lf..."
+    case "$OS" in
+        Darwin)
+            brew install lf chafa
+            ;;
+        Linux)
+            if command -v apt &>/dev/null; then
+                sudo apt update && sudo apt install -y lf chafa
+            else
+                echo "WARN: Cannot install lf — install manually from https://github.com/gokcehan/lf" >&2
+            fi
+            ;;
+        FreeBSD)
+            sudo pkg install -y lf chafa
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Symlink lf config
+# ---------------------------------------------------------------------------
+link_lf() {
+    mkdir -p ~/.config/lf
+    local src="$DOTFILES_DIR/lf"
+
+    for f in lfrc preview clean; do
+        local target="$src/$f"
+        local link="$HOME/.config/lf/$f"
+
+        if [ -f "$link" ] && [ ! -L "$link" ]; then
+            echo "==> Backing up existing lf/$f to $f.bak"
+            mv "$link" "${link}.bak"
+        fi
+
+        ln -sf "$target" "$link"
+        echo "==> Linked $link -> $target"
+    done
+
+    chmod +x "$HOME/.config/lf/preview" "$HOME/.config/lf/clean"
+}
+
+# ---------------------------------------------------------------------------
 # Symlink config.fish
 # ---------------------------------------------------------------------------
 link_config() {
@@ -271,9 +320,11 @@ install_zoxide
 install_eza
 install_nvim
 install_alacritty
+install_lf
 install_nerd_font
 link_config
 link_nvim
+link_lf
 link_alacritty
 set_default_shell
 

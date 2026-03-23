@@ -1,0 +1,33 @@
+# Basic settings
+set previewer ~/.config/lf/preview
+set cleaner ~/.config/lf/clean
+set hidden true
+set icons true
+set ignorecase true
+set ratios 1:2:3
+
+# Shell
+set shell fish
+
+# Delete
+cmd trash %mkdir -p ~/.trash && mv "$fx" ~/.trash
+
+# Open files
+cmd open ${{
+    case $(file --mime-type -Lb $f) in
+        text/*|application/json) $EDITOR $f;;
+        image/*) chafa $f;;
+        video/*|audio/*) mpv $f;;
+        application/pdf) xdg-open $f;;
+        *) xdg-open $f;;
+    esac
+}}
+
+# Keybindings
+map d
+map dd trash
+map x cut
+map y copy
+map p paste
+map <enter> open
+map . set hidden!
