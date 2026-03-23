@@ -1,0 +1,17 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<channel name="xfce4-notifyd" version="1.0">
+  <property name="log-max-size-enabled" type="bool" value="true"/>
+  <property name="theme" type="string" value="Default"/>
+  <property name="expire-timeout" type="int" value="5"/>
+  <property name="initial-opacity" type="double" value="0.90000000000000002"/>
+  <property name="applications" type="empty">
+    <property name="known_applications" type="array">
+      <value type="string" value="org.xfce.Thunar"/>
+      <value type="string" value="org.xfce.xfdesktop"/>
+    </property>
+  </property>
+  <property name="notify-location" type="string" value="top-right"/>
+  <property name="do-not-disturb" type="bool" value="false"/>
+  <property name="notification-log" type="bool" value="true"/>
+</channel>
