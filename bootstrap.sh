@@ -168,6 +168,9 @@ install_nerd_font() {
             brew install --cask font-jetbrains-mono-nerd-font
             ;;
         Linux)
+            if command -v pacman &>/dev/null; then
+                sudo pacman -Sy --noconfirm fontconfig unzip
+            fi
             if fc-list | grep -qi "JetBrainsMono"; then
                 echo "==> JetBrainsMono Nerd Font already installed"
                 return
@@ -216,7 +219,9 @@ install_lf() {
             brew install lf chafa
             ;;
         Linux)
-            if command -v apt &>/dev/null; then
+            if command -v pacman &>/dev/null; then
+                sudo pacman -Sy --noconfirm lf chafa
+            elif command -v apt &>/dev/null; then
                 sudo apt update && sudo apt install -y lf chafa
             else
                 echo "WARN: Cannot install lf — install manually from https://github.com/gokcehan/lf" >&2
