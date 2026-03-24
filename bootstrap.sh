@@ -49,7 +49,11 @@ install_starship() {
         return
     fi
     echo "==> Installing starship..."
-    curl -sS https://starship.rs/install.sh | sh -s -- --yes
+    if command -v pacman &>/dev/null; then
+        sudo pacman -Sy --noconfirm starship
+    else
+        curl -sS https://starship.rs/install.sh | sh -s -- --yes
+    fi
 }
 
 # ---------------------------------------------------------------------------
