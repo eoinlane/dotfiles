@@ -21,7 +21,9 @@ install_fish() {
             brew install fish
             ;;
         Linux)
-            if command -v apt &>/dev/null; then
+            if command -v pacman &>/dev/null; then
+                sudo pacman -Sy --noconfirm fish
+            elif command -v apt &>/dev/null; then
                 sudo apt update && sudo apt install -y fish
             else
                 echo "ERROR: Unsupported Linux distro — install fish manually." >&2
@@ -64,7 +66,9 @@ install_zoxide() {
             brew install zoxide
             ;;
         Linux)
-            if command -v apt &>/dev/null; then
+            if command -v pacman &>/dev/null; then
+                sudo pacman -Sy --noconfirm zoxide
+            elif command -v apt &>/dev/null; then
                 sudo apt update && sudo apt install -y zoxide
             else
                 echo "WARN: Cannot install zoxide — install manually via cargo or https://github.com/ajeetdsouza/zoxide" >&2
@@ -90,7 +94,9 @@ install_eza() {
             brew install eza
             ;;
         Linux)
-            if command -v apt &>/dev/null; then
+            if command -v pacman &>/dev/null; then
+                sudo pacman -Sy --noconfirm eza
+            elif command -v apt &>/dev/null; then
                 sudo apt update && sudo apt install -y eza
             else
                 echo "WARN: Cannot install eza — install manually via cargo or GitHub releases." >&2
@@ -116,7 +122,9 @@ install_nvim() {
             brew install neovim
             ;;
         Linux)
-            if command -v snap &>/dev/null; then
+            if command -v pacman &>/dev/null; then
+                sudo pacman -Sy --noconfirm neovim
+            elif command -v snap &>/dev/null; then
                 sudo snap install nvim --classic
             elif command -v apt &>/dev/null; then
                 # apt version is too old; install via snap or AppImage
