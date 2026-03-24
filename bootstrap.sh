@@ -49,7 +49,7 @@ install_starship() {
         return
     fi
     echo "==> Installing starship..."
-    curl -sS https://starship.rs/install.sh | sh
+    curl -sS https://starship.rs/install.sh | sh -s -- --yes
 }
 
 # ---------------------------------------------------------------------------
