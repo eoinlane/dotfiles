@@ -312,6 +312,68 @@ link_alacritty() {
 }
 
 # ---------------------------------------------------------------------------
+# Symlink XFCE config (FreeBSD only)
+# ---------------------------------------------------------------------------
+link_xfce() {
+    if [ "$OS" != "FreeBSD" ]; then return; fi
+    echo "==> Linking XFCE config..."
+
+    local configs=(
+        "xfce4"
+        "conky"
+        "picom"
+        "plank"
+        "rofi"
+        "qt5ct"
+        "fontconfig"
+        "pulse"
+    )
+
+    for dir in "${configs[@]}"; do
+        local target="$DOTFILES_DIR/xfce/$dir"
+        local link="$HOME/.config/$dir"
+
+        if [ ! -d "$target" ]; then continue; fi
+
+        if [ -d "$link" ] && [ ! -L "$link" ]; then
+            echo "==> Backing up existing $dir to ${dir}.bak"
+            mv "$link" "${link}.bak"
+        fi
+
+        ln -sfn "$target" "$link"
+        echo "==> Linked $link -> $target"
+    done
+
+    # Autostart
+    mkdir -p ~/.config/autostart
+    for f in "$DOTFILES_DIR"/xfce/autostart/*.desktop; do
+        local name
+        name="$(basename "$f")"
+        local link="$HOME/.config/autostart/$name"
+        if [ -f "$link" ] && [ ! -L "$link" ]; then
+            mv "$link" "${link}.bak"
+        fi
+        ln -sf "$f" "$link"
+        echo "==> Linked autostart/$name"
+    done
+
+    # Starship config for XFCE
+    if [ -f "$DOTFILES_DIR/xfce/starship.toml" ]; then
+        ln -sf "$DOTFILES_DIR/xfce/starship.toml" "$HOME/.config/starship.toml"
+        echo "==> Linked starship.toml (xfce)"
+    fi
+
+    # Scripts
+    mkdir -p ~/bin
+    for f in "$DOTFILES_DIR"/xfce/scripts/*; do
+        local name
+        name="$(basename "$f")"
+        ln -sf "$f" "$HOME/bin/$name"
+        echo "==> Linked script: $name"
+    done
+}
+
+# ---------------------------------------------------------------------------
 # Symlink nvim config
 # ---------------------------------------------------------------------------
 link_nvim() {
@@ -343,6 +405,7 @@ link_config
 link_nvim
 link_lf
 link_alacritty
+link_xfce
 set_default_shell
 
 echo ""
