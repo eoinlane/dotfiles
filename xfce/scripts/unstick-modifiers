@@ -1,0 +1,138 @@
+#!/usr/local/bin/python3.11
+"""
+Watchdog daemon: detects and releases stuck modifier keys.
+
+Uses XQueryKeymap to check if modifier keys are physically held.
+If a modifier has been continuously pressed for longer than THRESHOLD
+seconds without any other key activity, it's almost certainly an
+RDP ghost key — release it.
+
+Usage: unstick-modifiers [--threshold SECS] [--interval SECS]
+"""
+
+import ctypes
+import ctypes.util
+import time
+import sys
+import signal
+import os
+import argparse
+
+def load_x11():
+    path = ctypes.util.find_library("X11")
+    if not path:
+        path = "libX11.so.6"
+    lib = ctypes.CDLL(path)
+
+    lib.XOpenDisplay.argtypes = [ctypes.c_char_p]
+    lib.XOpenDisplay.restype = ctypes.c_void_p
+    lib.XQueryKeymap.argtypes = [ctypes.c_void_p, ctypes.c_char * 32]
+    lib.XQueryKeymap.restype = ctypes.c_int
+    lib.XCloseDisplay.argtypes = [ctypes.c_void_p]
+    lib.XCloseDisplay.restype = ctypes.c_int
+    lib.XFlush.argtypes = [ctypes.c_void_p]
+    lib.XFlush.restype = ctypes.c_int
+
+    # XTest is in libXtst
+    xtst_path = ctypes.util.find_library("Xtst")
+    if not xtst_path:
+        xtst_path = "libXtst.so.6"
+    xtst = ctypes.CDLL(xtst_path)
+    xtst.XTestFakeKeyEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong]
+    xtst.XTestFakeKeyEvent.restype = ctypes.c_int
+
+    lib._xtst = xtst  # keep reference
+    return lib
+
+def key_is_pressed(keymap, keycode):
+    byte_idx = keycode // 8
+    bit_idx = keycode % 8
+    return bool(keymap[byte_idx] & (1 << bit_idx))
+
+def release_key(x11, display, keycode):
+    x11._xtst.XTestFakeKeyEvent(display, keycode, 0, 0)  # 0 = release
+    x11.XFlush(display)
+
+# Modifier keycodes (from xmodmap output for this system)
+MODIFIERS = {
+    "Control_L": 0x25,   # 37
+    "Control_R": 0x6d,   # 109
+    "Shift_L":   0x32,   # 50
+    "Shift_R":   0x3e,   # 62
+    "Alt_L":     0x40,   # 64
+    "Alt_R":     0x71,   # 113
+    "Super_L":   0x73,   # 115
+    "Super_R":   0x74,   # 116
+}
+
+def count_pressed_keys(keymap):
+    """Count total number of pressed keys."""
+    count = 0
+    for byte in keymap:
+        b = byte
+        while b:
+            count += b & 1
+            b >>= 1
+    return count
+
+def main():
+    parser = argparse.ArgumentParser(description="Detect and release stuck modifier keys")
+    parser.add_argument("--threshold", type=float, default=4.0,
+                        help="Seconds a modifier must be stuck before releasing (default: 4)")
+    parser.add_argument("--interval", type=float, default=1.0,
+                        help="Polling interval in seconds (default: 1)")
+    args = parser.parse_args()
+
+    display_name = os.environ.get("DISPLAY", ":10")
+    os.environ["DISPLAY"] = display_name
+
+    x11 = load_x11()
+    display = x11.XOpenDisplay(display_name.encode())
+    if not display:
+        print(f"Cannot open display {display_name}", file=sys.stderr)
+        sys.exit(1)
+
+    def cleanup(sig, frame):
+        x11.XCloseDisplay(display)
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, cleanup)
+    signal.signal(signal.SIGTERM, cleanup)
+
+    print(f"unstick-modifiers: watching {display_name}, threshold={args.threshold}s, interval={args.interval}s (pid {os.getpid()})")
+
+    # Track how long each modifier has been continuously pressed
+    stuck_since = {}  # keycode -> timestamp when first seen pressed
+
+    while True:
+        keymap_buf = (ctypes.c_char * 32)()
+        x11.XQueryKeymap(display, keymap_buf)
+        keymap = bytes(keymap_buf)
+
+        total_pressed = count_pressed_keys(keymap)
+        now = time.time()
+
+        for name, kc in MODIFIERS.items():
+            pressed = key_is_pressed(keymap, kc)
+
+            if pressed:
+                if kc not in stuck_since:
+                    stuck_since[kc] = now
+                elif now - stuck_since[kc] > args.threshold:
+                    # Modifier has been held too long.
+                    # Only release if it's the only key (or only modifiers) pressed,
+                    # suggesting it's a ghost rather than a real long-press combo.
+                    non_mod_pressed = total_pressed - sum(
+                        1 for mkc in MODIFIERS.values() if key_is_pressed(keymap, mkc)
+                    )
+                    if non_mod_pressed == 0:
+                        print(f"[{time.strftime('%H:%M:%S')}] Releasing stuck {name} (held {now - stuck_since[kc]:.1f}s)")
+                        release_key(x11, display, kc)
+                        del stuck_since[kc]
+            else:
+                stuck_since.pop(kc, None)
+
+        time.sleep(args.interval)
+
+if __name__ == "__main__":
+    main()

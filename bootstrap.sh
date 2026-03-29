@@ -21,9 +21,7 @@ install_fish() {
             brew install fish
             ;;
         Linux)
-            if command -v pacman &>/dev/null; then
-                sudo pacman -Sy --noconfirm fish
-            elif command -v apt &>/dev/null; then
+            if command -v apt &>/dev/null; then
                 sudo apt update && sudo apt install -y fish
             else
                 echo "ERROR: Unsupported Linux distro — install fish manually." >&2
@@ -49,11 +47,7 @@ install_starship() {
         return
     fi
     echo "==> Installing starship..."
-    if command -v pacman &>/dev/null; then
-        sudo pacman -Sy --noconfirm starship
-    else
-        curl -sS https://starship.rs/install.sh | sh -s -- --yes
-    fi
+    curl -sS https://starship.rs/install.sh | sh
 }
 
 # ---------------------------------------------------------------------------
@@ -70,9 +64,7 @@ install_zoxide() {
             brew install zoxide
             ;;
         Linux)
-            if command -v pacman &>/dev/null; then
-                sudo pacman -Sy --noconfirm zoxide
-            elif command -v apt &>/dev/null; then
+            if command -v apt &>/dev/null; then
                 sudo apt update && sudo apt install -y zoxide
             else
                 echo "WARN: Cannot install zoxide — install manually via cargo or https://github.com/ajeetdsouza/zoxide" >&2
@@ -98,9 +90,7 @@ install_eza() {
             brew install eza
             ;;
         Linux)
-            if command -v pacman &>/dev/null; then
-                sudo pacman -Sy --noconfirm eza
-            elif command -v apt &>/dev/null; then
+            if command -v apt &>/dev/null; then
                 sudo apt update && sudo apt install -y eza
             else
                 echo "WARN: Cannot install eza — install manually via cargo or GitHub releases." >&2
@@ -126,9 +116,7 @@ install_nvim() {
             brew install neovim
             ;;
         Linux)
-            if command -v pacman &>/dev/null; then
-                sudo pacman -Sy --noconfirm neovim
-            elif command -v snap &>/dev/null; then
+            if command -v snap &>/dev/null; then
                 sudo snap install nvim --classic
             elif command -v apt &>/dev/null; then
                 # apt version is too old; install via snap or AppImage
@@ -142,118 +130,6 @@ install_nvim() {
             sudo pkg install -y neovim gmake
             ;;
     esac
-}
-
-# ---------------------------------------------------------------------------
-# Install JetBrainsMono Nerd Font
-# ---------------------------------------------------------------------------
-install_alacritty() {
-    if [ "$OS" != "Darwin" ]; then return; fi
-    if command -v alacritty &>/dev/null; then
-        echo "==> alacritty already installed"
-        return
-    fi
-    echo "==> Installing alacritty..."
-    brew install --cask alacritty
-}
-
-install_nerd_font() {
-    case "$OS" in
-        Darwin)
-            if brew list --cask font-jetbrains-mono-nerd-font &>/dev/null; then
-                echo "==> JetBrainsMono Nerd Font already installed"
-                return
-            fi
-            echo "==> Installing JetBrainsMono Nerd Font..."
-            brew install --cask font-jetbrains-mono-nerd-font
-            ;;
-        Linux)
-            if command -v pacman &>/dev/null; then
-                sudo pacman -Sy --noconfirm fontconfig unzip
-            fi
-            if fc-list | grep -qi "JetBrainsMono"; then
-                echo "==> JetBrainsMono Nerd Font already installed"
-                return
-            fi
-            local font_dir="$HOME/.local/share/fonts"
-            local zip="/tmp/JetBrainsMono.zip"
-            echo "==> Installing JetBrainsMono Nerd Font..."
-            mkdir -p "$font_dir"
-            curl -fLo "$zip" \
-                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-            unzip -o "$zip" -d "$font_dir/JetBrainsMono" '*.ttf'
-            fc-cache -f "$font_dir"
-            rm "$zip"
-            echo "==> Font installed — set JetBrainsMono Nerd Font in your terminal"
-            ;;
-        FreeBSD)
-            if fc-list | grep -qi "JetBrainsMono"; then
-                echo "==> JetBrainsMono Nerd Font already installed"
-                return
-            fi
-            local font_dir="$HOME/.local/share/fonts"
-            local zip="/tmp/JetBrainsMono.zip"
-            echo "==> Installing JetBrainsMono Nerd Font..."
-            mkdir -p "$font_dir"
-            fetch -o "$zip" \
-                https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
-            unzip -o "$zip" -d "$font_dir/JetBrainsMono" '*.ttf'
-            fc-cache -f "$font_dir"
-            rm "$zip"
-            echo "==> Font installed — set JetBrainsMono Nerd Font in your terminal"
-            ;;
-    esac
-}
-
-# ---------------------------------------------------------------------------
-# Install lf + preview dependencies
-# ---------------------------------------------------------------------------
-install_lf() {
-    if command -v lf &>/dev/null; then
-        echo "==> lf already installed: $(command -v lf)"
-        return
-    fi
-    echo "==> Installing lf..."
-    case "$OS" in
-        Darwin)
-            brew install lf chafa
-            ;;
-        Linux)
-            if command -v pacman &>/dev/null; then
-                sudo pacman -Sy --noconfirm lf chafa
-            elif command -v apt &>/dev/null; then
-                sudo apt update && sudo apt install -y lf chafa
-            else
-                echo "WARN: Cannot install lf — install manually from https://github.com/gokcehan/lf" >&2
-            fi
-            ;;
-        FreeBSD)
-            sudo pkg install -y lf chafa
-            ;;
-    esac
-}
-
-# ---------------------------------------------------------------------------
-# Symlink lf config
-# ---------------------------------------------------------------------------
-link_lf() {
-    mkdir -p ~/.config/lf
-    local src="$DOTFILES_DIR/lf"
-
-    for f in lfrc preview clean; do
-        local target="$src/$f"
-        local link="$HOME/.config/lf/$f"
-
-        if [ -f "$link" ] && [ ! -L "$link" ]; then
-            echo "==> Backing up existing lf/$f to $f.bak"
-            mv "$link" "${link}.bak"
-        fi
-
-        ln -sf "$target" "$link"
-        echo "==> Linked $link -> $target"
-    done
-
-    chmod +x "$HOME/.config/lf/preview" "$HOME/.config/lf/clean"
 }
 
 # ---------------------------------------------------------------------------
@@ -294,86 +170,6 @@ set_default_shell() {
 }
 
 # ---------------------------------------------------------------------------
-# Symlink alacritty config (macOS only)
-# ---------------------------------------------------------------------------
-link_alacritty() {
-    if [ "$OS" != "Darwin" ]; then return; fi
-    mkdir -p ~/.config/alacritty
-    local target="$DOTFILES_DIR/alacritty/alacritty.toml"
-    local link="$HOME/.config/alacritty/alacritty.toml"
-
-    if [ -f "$link" ] && [ ! -L "$link" ]; then
-        echo "==> Backing up existing alacritty.toml to alacritty.toml.bak"
-        mv "$link" "${link}.bak"
-    fi
-
-    ln -sf "$target" "$link"
-    echo "==> Linked $link -> $target"
-}
-
-# ---------------------------------------------------------------------------
-# Symlink XFCE config (FreeBSD only)
-# ---------------------------------------------------------------------------
-link_xfce() {
-    if [ "$OS" != "FreeBSD" ]; then return; fi
-    echo "==> Linking XFCE config..."
-
-    local configs=(
-        "xfce4"
-        "conky"
-        "picom"
-        "plank"
-        "rofi"
-        "qt5ct"
-        "fontconfig"
-        "pulse"
-    )
-
-    for dir in "${configs[@]}"; do
-        local target="$DOTFILES_DIR/xfce/$dir"
-        local link="$HOME/.config/$dir"
-
-        if [ ! -d "$target" ]; then continue; fi
-
-        if [ -d "$link" ] && [ ! -L "$link" ]; then
-            echo "==> Backing up existing $dir to ${dir}.bak"
-            mv "$link" "${link}.bak"
-        fi
-
-        ln -sfn "$target" "$link"
-        echo "==> Linked $link -> $target"
-    done
-
-    # Autostart
-    mkdir -p ~/.config/autostart
-    for f in "$DOTFILES_DIR"/xfce/autostart/*.desktop; do
-        local name
-        name="$(basename "$f")"
-        local link="$HOME/.config/autostart/$name"
-        if [ -f "$link" ] && [ ! -L "$link" ]; then
-            mv "$link" "${link}.bak"
-        fi
-        ln -sf "$f" "$link"
-        echo "==> Linked autostart/$name"
-    done
-
-    # Starship config for XFCE
-    if [ -f "$DOTFILES_DIR/xfce/starship.toml" ]; then
-        ln -sf "$DOTFILES_DIR/xfce/starship.toml" "$HOME/.config/starship.toml"
-        echo "==> Linked starship.toml (xfce)"
-    fi
-
-    # Scripts
-    mkdir -p ~/bin
-    for f in "$DOTFILES_DIR"/xfce/scripts/*; do
-        local name
-        name="$(basename "$f")"
-        ln -sf "$f" "$HOME/bin/$name"
-        echo "==> Linked script: $name"
-    done
-}
-
-# ---------------------------------------------------------------------------
 # Symlink nvim config
 # ---------------------------------------------------------------------------
 link_nvim() {
@@ -391,6 +187,60 @@ link_nvim() {
 }
 
 # ---------------------------------------------------------------------------
+# Symlink XFCE desktop configs (FreeBSD only)
+# ---------------------------------------------------------------------------
+link_xfce() {
+    if [ "$OS" != "FreeBSD" ]; then
+        echo "==> Skipping XFCE config (not FreeBSD)"
+        return
+    fi
+
+    echo "==> Linking XFCE desktop configs..."
+
+    # Directories to symlink: dotfiles path -> ~/.config path
+    local -A dirs=(
+        ["xfce4"]="xfce4"
+        ["autostart"]="autostart"
+        ["picom"]="picom"
+        ["rofi"]="rofi"
+        ["plank"]="plank"
+        ["fontconfig"]="fontconfig"
+        ["qt5ct"]="qt5ct"
+        ["conky"]="conky"
+        ["gtk-3.0"]="gtk-3.0"
+        ["Thunar"]="Thunar"
+        ["pulse"]="pulse"
+        ["lf"]="lf"
+    )
+
+    for src in "${!dirs[@]}"; do
+        local target="$DOTFILES_DIR/xfce/$src"
+        local link="$HOME/.config/${dirs[$src]}"
+
+        if [ -d "$link" ] && [ ! -L "$link" ]; then
+            echo "    Backing up $link -> ${link}.bak"
+            mv "$link" "${link}.bak"
+        fi
+
+        ln -sfn "$target" "$link"
+        echo "    Linked $link -> $target"
+    done
+
+    # Starship config (single file)
+    ln -sf "$DOTFILES_DIR/xfce/starship.toml" "$HOME/.config/starship.toml"
+    echo "    Linked ~/.config/starship.toml"
+
+    # Custom scripts
+    mkdir -p "$HOME/.local/bin"
+    for script in "$DOTFILES_DIR"/xfce/scripts/*; do
+        local name
+        name="$(basename "$script")"
+        ln -sf "$script" "$HOME/.local/bin/$name"
+        echo "    Linked ~/.local/bin/$name"
+    done
+}
+
+# ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
 install_fish
@@ -398,13 +248,8 @@ install_starship
 install_zoxide
 install_eza
 install_nvim
-install_alacritty
-install_lf
-install_nerd_font
 link_config
 link_nvim
-link_lf
-link_alacritty
 link_xfce
 set_default_shell
 

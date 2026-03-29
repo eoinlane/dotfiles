@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Unstick Modifiers
+Comment=Watchdog to release stuck modifier keys (RDP fix)
+Exec=/home/eoin/.local/bin/unstick-modifiers --threshold 4 --interval 1
+Hidden=false
+X-XFCE-Autostart-Override=true

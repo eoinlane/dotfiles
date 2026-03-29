@@ -54,4 +54,63 @@ if status is-interactive
     if test "$os" = "Darwin"
         abbr -a notes 'cd ~/Library/Mobile\ Documents/com~apple~CloudDocs/My\ Notes'
     end
+
+    # --- Tool aliases/abbreviations ---
+
+    # bat instead of cat
+    if command -v bat &>/dev/null
+        abbr -a cat bat
+    end
+
+    # fd-find (on FreeBSD the binary is 'fd')
+    if command -v fd &>/dev/null
+        abbr -a find fd
+    else if command -v fd-find &>/dev/null
+        alias fd fd-find
+        abbr -a find fd-find
+    end
+
+    # --- fzf configuration ---
+    set -gx FZF_DEFAULT_OPTS '--color=dark --height=40% --layout=reverse --border'
+
+    # Use fd for fzf file search if available
+    if command -v fd &>/dev/null
+        set -gx FZF_DEFAULT_COMMAND 'fd --type f --hidden --follow --exclude .git'
+        set -gx FZF_CTRL_T_COMMAND 'fd --type f --hidden --follow --exclude .git'
+    end
+
+    # Source fzf key bindings if available (FreeBSD locations)
+    if test -f /usr/local/share/fzf/shell/key-bindings.fish
+        source /usr/local/share/fzf/shell/key-bindings.fish
+    else if test -f /usr/local/share/fzf/key-bindings.fish
+        source /usr/local/share/fzf/key-bindings.fish
+    else if test -f /usr/local/share/examples/fzf/shell/key-bindings.fish
+        source /usr/local/share/examples/fzf/shell/key-bindings.fish
+    end
+
+    # Manual fzf key bindings as fallback
+    if not functions -q fzf_key_bindings
+        # Ctrl+R: fzf history search
+        function __fzf_history
+            history | fzf --no-sort --query (commandline) | read -l result
+            and commandline -- $result
+            commandline -f repaint
+        end
+        bind \cr __fzf_history
+
+        # Ctrl+T: fzf file search
+        function __fzf_find_file
+            set -l cmd $FZF_CTRL_T_COMMAND
+            if test -z "$cmd"
+                set cmd "find . -type f 2>/dev/null"
+            end
+            eval $cmd | fzf --multi | while read -l result
+                commandline -it -- (string escape -- $result)" "
+            end
+            commandline -f repaint
+        end
+        bind \ct __fzf_find_file
+    else
+        fzf_key_bindings
+    end
 end

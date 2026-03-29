@@ -1,0 +1,3 @@
+#!/bin/sh
+# Clean up previews (needed for sixel/image cleanup)
+printf '\033\\'
