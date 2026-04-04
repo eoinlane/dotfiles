@@ -133,58 +133,53 @@ install_nvim() {
 }
 
 # ---------------------------------------------------------------------------
-# Install zellij
+# Install tmux
 # ---------------------------------------------------------------------------
-install_zellij() {
-    if command -v zellij &>/dev/null; then
-        echo "==> zellij already installed: $(command -v zellij)"
+install_tmux() {
+    if command -v tmux &>/dev/null; then
+        echo "==> tmux already installed: $(command -v tmux)"
         return
     fi
-    echo "==> Installing zellij..."
+    echo "==> Installing tmux..."
     case "$OS" in
         Darwin)
-            brew install zellij
+            brew install tmux
             ;;
         Linux)
             if command -v apt &>/dev/null; then
-                echo "WARN: zellij not in apt repos — install via cargo or https://github.com/zellij-org/zellij/releases" >&2
-            elif command -v cargo &>/dev/null; then
-                cargo install --locked zellij
+                sudo apt update && sudo apt install -y tmux
+            else
+                echo "WARN: Cannot install tmux — install manually." >&2
             fi
             ;;
         FreeBSD)
-            sudo pkg install -y zellij
+            sudo pkg install -y tmux
             ;;
     esac
 }
 
 # ---------------------------------------------------------------------------
-# Symlink zellij config
+# Symlink tmux config + install TPM
 # ---------------------------------------------------------------------------
-link_zellij() {
-    mkdir -p ~/.config/zellij
-    local target="$DOTFILES_DIR/zellij/config.kdl"
-    local link="$HOME/.config/zellij/config.kdl"
+link_tmux() {
+    local target="$DOTFILES_DIR/tmux/tmux.conf"
+    local link="$HOME/.tmux.conf"
 
     if [ -f "$link" ] && [ ! -L "$link" ]; then
-        echo "==> Backing up existing zellij config.kdl to config.kdl.bak"
+        echo "==> Backing up existing .tmux.conf to .tmux.conf.bak"
         mv "$link" "${link}.bak"
     fi
 
     ln -sf "$target" "$link"
     echo "==> Linked $link -> $target"
 
-    # Link themes directory
-    local themes_target="$DOTFILES_DIR/zellij/themes"
-    local themes_link="$HOME/.config/zellij/themes"
-
-    if [ -d "$themes_link" ] && [ ! -L "$themes_link" ]; then
-        echo "==> Backing up existing zellij themes to themes.bak"
-        mv "$themes_link" "${themes_link}.bak"
+    # Install TPM if not present
+    if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+        echo "==> Installing TPM (Tmux Plugin Manager)..."
+        git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+    else
+        echo "==> TPM already installed"
     fi
-
-    ln -sfn "$themes_target" "$themes_link"
-    echo "==> Linked $themes_link -> $themes_target"
 }
 
 # ---------------------------------------------------------------------------
@@ -303,10 +298,10 @@ install_starship
 install_zoxide
 install_eza
 install_nvim
-install_zellij
+install_tmux
 link_config
 link_nvim
-link_zellij
+link_tmux
 link_xfce
 set_default_shell
 
