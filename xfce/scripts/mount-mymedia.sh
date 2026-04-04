@@ -1,24 +1,18 @@
 #!/bin/sh
-# Mount MyMedia SMB share from Raspberry Pi via gvfs (gio)
-# Runs inside the XFCE desktop session where dbus is available
+# Mount MyMedia NFS share from FreeBSD Plex server
+# Works on Linux (XFCE/FreeBSD desktop) — macOS uses mount_nfs directly
 
-SHARE="smb://raspberrypi/MyMedia"
-LINK="$HOME/MyMedia"
-GVFS_PATH="$HOME/.gvfs/MyMedia on raspberrypi"
+SHARE="192.168.0.14:/zroot/mymedia"
+MOUNT="/home/$(whoami)/MyMedia"
 
 # Already mounted?
-gio mount -l 2>/dev/null | grep -q "raspberrypi" && exit 0
+mount | grep -q "$SHARE" && exit 0
 
-# Mount via gio (will use credentials from gnome-keyring or prompt)
-echo -e "eoin\nWORKGROUP\nel" | gio mount "$SHARE" 2>/dev/null
+# Create mount point
+mkdir -p "$MOUNT"
 
-# Create a symlink for easy access
-if [ -d "$GVFS_PATH" ] && [ ! -L "$LINK" ]; then
-    ln -sf "$GVFS_PATH" "$LINK"
-fi
+# Mount via NFS
+sudo mount -t nfs -o resvport "$SHARE" "$MOUNT" 2>/dev/null || \
+    mount -t nfs "$SHARE" "$MOUNT" 2>/dev/null
 
-# Also try the /run path (newer gvfs)
-GVFS_RUN="/run/user/$(id -u)/gvfs/smb-share:server=raspberrypi,share=mymedia"
-if [ -d "$GVFS_RUN" ] && [ ! -L "$LINK" ]; then
-    ln -sf "$GVFS_RUN" "$LINK"
-fi
+echo "Mounted $SHARE at $MOUNT"
