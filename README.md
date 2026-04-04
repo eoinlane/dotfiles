@@ -6,6 +6,7 @@ Personal configuration for macOS, Ubuntu, and FreeBSD.
 
 - **`fish/config.fish`** — Fish shell config with Starship prompt and git abbreviations
 - **`nvim/`** — Neovim configuration (lazy.nvim, LSP, Go, AI, and more)
+- **`zellij/`** — Zellij terminal multiplexer config (catppuccin-mocha theme, vim-style keybinds)
 - **`bootstrap.sh`** — One-command install script
 
 ## Quick Start
@@ -21,7 +22,8 @@ The bootstrap script will:
 2. Install [Starship](https://starship.rs/) prompt
 3. Symlink `fish/config.fish` to `~/.config/fish/config.fish`
 4. Symlink `nvim/` to `~/.config/nvim`
-5. Set fish as your default shell
+5. Install and symlink [zellij](https://zellij.dev/) terminal multiplexer
+6. Set fish as your default shell
 
 Then open Neovim and run `:Lazy sync` to install all plugins.
 

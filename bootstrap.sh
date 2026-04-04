@@ -133,6 +133,61 @@ install_nvim() {
 }
 
 # ---------------------------------------------------------------------------
+# Install zellij
+# ---------------------------------------------------------------------------
+install_zellij() {
+    if command -v zellij &>/dev/null; then
+        echo "==> zellij already installed: $(command -v zellij)"
+        return
+    fi
+    echo "==> Installing zellij..."
+    case "$OS" in
+        Darwin)
+            brew install zellij
+            ;;
+        Linux)
+            if command -v apt &>/dev/null; then
+                echo "WARN: zellij not in apt repos — install via cargo or https://github.com/zellij-org/zellij/releases" >&2
+            elif command -v cargo &>/dev/null; then
+                cargo install --locked zellij
+            fi
+            ;;
+        FreeBSD)
+            sudo pkg install -y zellij
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Symlink zellij config
+# ---------------------------------------------------------------------------
+link_zellij() {
+    mkdir -p ~/.config/zellij
+    local target="$DOTFILES_DIR/zellij/config.kdl"
+    local link="$HOME/.config/zellij/config.kdl"
+
+    if [ -f "$link" ] && [ ! -L "$link" ]; then
+        echo "==> Backing up existing zellij config.kdl to config.kdl.bak"
+        mv "$link" "${link}.bak"
+    fi
+
+    ln -sf "$target" "$link"
+    echo "==> Linked $link -> $target"
+
+    # Link themes directory
+    local themes_target="$DOTFILES_DIR/zellij/themes"
+    local themes_link="$HOME/.config/zellij/themes"
+
+    if [ -d "$themes_link" ] && [ ! -L "$themes_link" ]; then
+        echo "==> Backing up existing zellij themes to themes.bak"
+        mv "$themes_link" "${themes_link}.bak"
+    fi
+
+    ln -sfn "$themes_target" "$themes_link"
+    echo "==> Linked $themes_link -> $themes_target"
+}
+
+# ---------------------------------------------------------------------------
 # Symlink config.fish
 # ---------------------------------------------------------------------------
 link_config() {
@@ -248,8 +303,10 @@ install_starship
 install_zoxide
 install_eza
 install_nvim
+install_zellij
 link_config
 link_nvim
+link_zellij
 link_xfce
 set_default_shell
 
