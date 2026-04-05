@@ -2,11 +2,8 @@ return {
   { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
     dependencies = {
-      -- Automatically install LSPs to stdpath for neovim
       'williamboman/mason.nvim',
       'williamboman/mason-lspconfig.nvim',
-
-      -- Useful status updates for LSP
       'j-hui/fidget.nvim',
     },
     config = function()
@@ -16,64 +13,45 @@ return {
       vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float)
       vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist)
 
-      -- LSP settings.
-      --  This function gets run when an LSP connects to a particular buffer.
-      local on_attach = function(_, bufnr)
-        -- NOTE: Remember that lua is a real programming language, and as such it is possible
-        -- to define small helper and utility functions so you don't have to repeat yourself
-        -- many times.
-        --
-        -- In this case, we create a function that lets us more easily define mappings specific
-        -- for LSP related items. It sets the mode, buffer and description for us each time.
-        local nmap = function(keys, func, desc)
-          if desc then
-            desc = 'LSP: ' .. desc
+      -- LSP keymaps on attach
+      vim.api.nvim_create_autocmd('LspAttach', {
+        callback = function(args)
+          local bufnr = args.buf
+          local nmap = function(keys, func, desc)
+            if desc then desc = 'LSP: ' .. desc end
+            vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
           end
 
-          vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
-        end
+          nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+          nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+          nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
+          nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+          nmap('gI', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
+          nmap('<leader>D', vim.lsp.buf.type_definition, 'Type [D]efinition')
+          nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
+          nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+          nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
+          nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
+          nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+          nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
+          nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
+          nmap('<leader>wl', function()
+            print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+          end, '[W]orkspace [L]ist Folders')
 
-        nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-        nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
-        nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
-        nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
-        nmap('gI', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
-        nmap('<leader>D', vim.lsp.buf.type_definition, 'Type [D]efinition')
-        nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-        nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
-
-        -- See `:help K` for why this keymap
-        nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
-        nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
-
-        -- Lesser used LSP functionality
-        nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-        nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
-        nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
-        nmap('<leader>wl', function()
-          print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-        end, '[W]orkspace [L]ist Folders')
-
-        -- Create a command `:Format` local to the LSP buffer
-        vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
-          if vim.lsp.buf.format then
+          vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
             vim.lsp.buf.format()
-          elseif vim.lsp.buf.formatting then
-            vim.lsp.buf.formatting()
-          end
-        end, { desc = 'Format current buffer with LSP' })
-      end
+          end, { desc = 'Format current buffer with LSP' })
+        end,
+      })
 
-      -- Setup mason so it can manage external tooling
+      -- Setup mason
       require('mason').setup()
 
-      -- Enable the following language servers
-      -- Feel free to add/remove any LSPs that you want here. They will automatically be installed
-      -- Only include servers whose required runtimes are available
+      -- Determine which servers to install
       local function has(bin) return vim.fn.executable(bin) == 1 end
       local is_freebsd = vim.uv.os_uname().sysname == 'FreeBSD'
 
-      -- Mason has no FreeBSD binaries; on FreeBSD install LSPs via pkg instead
       local servers = is_freebsd and {} or { 'lua_ls' }
       if has('clangd') or vim.fn.has('mac') == 1 then table.insert(servers, 'clangd') end
       if has('node') then
@@ -83,8 +61,6 @@ return {
       if has('go') then table.insert(servers, 'gopls') end
       if has('rustc') then table.insert(servers, 'rust_analyzer') end
 
-      -- Ensure the servers above are installed
-      -- automatic_enable=false: we manually call lspconfig setup below
       require('mason-lspconfig').setup {
         ensure_installed = servers,
         automatic_enable = false,
@@ -94,10 +70,9 @@ return {
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
-      -- Turn on lsp status information
       require('fidget').setup()
 
-      -- lua_ls gets extra settings
+      -- Configure servers using vim.lsp.config (new API)
       local server_settings = {
         lua_ls = {
           Lua = {
@@ -113,12 +88,12 @@ return {
       }
 
       for _, lsp in ipairs(servers) do
-        require('lspconfig')[lsp].setup {
-          on_attach = on_attach,
+        vim.lsp.config(lsp, {
           capabilities = capabilities,
           settings = server_settings[lsp] or {},
-        }
+        })
       end
+      vim.lsp.enable(servers)
 
       vim.api.nvim_create_autocmd('FileType', {
         pattern = 'sh',
@@ -142,7 +117,6 @@ return {
       'onsails/lspkind.nvim',
     },
     config = function()
-      -- nvim-cmp setup
       local cmp = require 'cmp'
       local luasnip = require 'luasnip'
 
