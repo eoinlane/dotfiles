@@ -43,6 +43,9 @@ if status is-interactive
     # Navigation
     abbr -a cd  z
 
+    # tmux session launcher
+    abbr -a home '~/dotfiles/tmux/start-home.sh'
+
     # SSH
     abbr -a ubuntu 'ssh eoin@nvidiaubuntubox'
 
