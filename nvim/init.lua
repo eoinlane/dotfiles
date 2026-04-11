@@ -1,8 +1,2 @@
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
-require('keymaps')
-require('lazy-bootstrap')
-require('options')
-require('misc')
-
--- vim: ts=8 sts=2 sw=2 et
+-- bootstrap lazy.nvim, LazyVim and your plugins
+require("config.lazy")
