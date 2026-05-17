@@ -4,6 +4,7 @@
 
 SESSION="home"
 DIR="$HOME/Documents/home"
+mkdir -p "$DIR"
 
 # Attach if already running
 if tmux has-session -t "$SESSION" 2>/dev/null; then
@@ -15,16 +16,16 @@ fi
 tmux new-session -d -s "$SESSION" -c "$DIR"
 
 # Split horizontally: left shell (40%) | right claude (60%)
-tmux split-window -h -t "$SESSION:1" -c "$DIR" -l 60%
+tmux split-window -h -t "$SESSION:0" -c "$DIR" -l 60%
 
 # Split the left pane vertically: top-left shell / bottom-left shell
-tmux split-window -v -t "$SESSION:1.0" -c "$DIR"
+tmux split-window -v -t "$SESSION:0.0" -c "$DIR"
 
 # Start claude in the right pane (pane 2 after splits)
-tmux send-keys -t "$SESSION:1.2" 'claude' Enter
+tmux send-keys -t "$SESSION:0.2" 'claude' Enter
 
 # Focus the claude pane
-tmux select-pane -t "$SESSION:1.2"
+tmux select-pane -t "$SESSION:0.2"
 
 # Attach
 tmux attach -t "$SESSION"

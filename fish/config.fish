@@ -8,6 +8,9 @@ if test "$os" = "Darwin"
 
     # VS Code CLI
     fish_add_path /Applications/Visual\ Studio\ Code.app/Contents/Resources/app/bin
+
+    # juliaup (Julia version manager)
+    fish_add_path $HOME/.juliaup/bin
 end
 
 if status is-interactive
