@@ -344,6 +344,25 @@ link_sway() {
 }
 
 # ---------------------------------------------------------------------------
+# Symlink Claude Code settings — applies bypassPermissions on trusted machines
+# (run this dotfiles bootstrap only on personal/home boxes, never on a
+# work-managed laptop where the security stance differs).
+# ---------------------------------------------------------------------------
+link_claude() {
+    mkdir -p ~/.claude
+    local target="$DOTFILES_DIR/claude/settings.json"
+    local link="$HOME/.claude/settings.json"
+
+    if [ -f "$link" ] && [ ! -L "$link" ]; then
+        echo "==> Backing up existing $link -> ${link}.bak"
+        mv "$link" "${link}.bak"
+    fi
+
+    ln -sf "$target" "$link"
+    echo "==> Linked $link -> $target"
+}
+
+# ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
 install_fish
@@ -357,6 +376,7 @@ link_nvim
 link_tmux
 link_xfce
 link_sway
+link_claude
 set_default_shell
 
 echo ""
