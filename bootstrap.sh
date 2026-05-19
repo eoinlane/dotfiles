@@ -192,20 +192,27 @@ link_tmux() {
 }
 
 # ---------------------------------------------------------------------------
-# Symlink config.fish
+# Symlink fish conf.d/ (platform-specific files self-guard with uname checks)
 # ---------------------------------------------------------------------------
 link_config() {
     mkdir -p ~/.config/fish
-    local target="$DOTFILES_DIR/fish/config.fish"
-    local link="$HOME/.config/fish/config.fish"
+    local target="$DOTFILES_DIR/fish/conf.d"
+    local link="$HOME/.config/fish/conf.d"
 
-    if [ -f "$link" ] && [ ! -L "$link" ]; then
-        echo "==> Backing up existing config.fish to config.fish.bak"
+    if [ -e "$link" ] && [ ! -L "$link" ]; then
+        echo "==> Backing up existing conf.d to conf.d.bak"
         mv "$link" "${link}.bak"
     fi
 
-    ln -sf "$target" "$link"
+    ln -sfn "$target" "$link"
     echo "==> Linked $link -> $target"
+
+    # Remove the old monolithic config.fish symlink if it's still around
+    local old="$HOME/.config/fish/config.fish"
+    if [ -L "$old" ]; then
+        echo "==> Removing stale config.fish symlink (replaced by conf.d/)"
+        rm "$old"
+    fi
 }
 
 # ---------------------------------------------------------------------------
