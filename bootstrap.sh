@@ -307,6 +307,69 @@ link_xfce() {
 }
 
 # ---------------------------------------------------------------------------
+# Symlink Sway/Wayland desktop configs (FreeBSD only)
+# ---------------------------------------------------------------------------
+link_sway() {
+    if [ "$OS" != "FreeBSD" ]; then
+        echo "==> Skipping Sway config (not FreeBSD)"
+        return
+    fi
+
+    echo "==> Linking Sway/Wayland desktop configs..."
+
+    # Directories to symlink: dotfiles path -> ~/.config path
+    local -A dirs=(
+        ["sway"]="sway"
+        ["waybar"]="waybar"
+        ["fuzzel"]="fuzzel"
+        ["mako"]="mako"
+    )
+
+    for src in "${!dirs[@]}"; do
+        local target="$DOTFILES_DIR/$src"
+        local link="$HOME/.config/${dirs[$src]}"
+
+        if [ -d "$link" ] && [ ! -L "$link" ]; then
+            echo "    Backing up $link -> ${link}.bak"
+            mv "$link" "${link}.bak"
+        fi
+
+        ln -sfn "$target" "$link"
+        echo "    Linked $link -> $target"
+    done
+
+    # Single fish conf.d file for Sway TTY autostart
+    mkdir -p "$HOME/.config/fish/conf.d"
+    local autostart_target="$DOTFILES_DIR/fish/conf.d/01-sway-autostart.fish"
+    local autostart_link="$HOME/.config/fish/conf.d/01-sway-autostart.fish"
+    if [ -f "$autostart_link" ] && [ ! -L "$autostart_link" ]; then
+        echo "    Backing up $autostart_link -> ${autostart_link}.bak"
+        mv "$autostart_link" "${autostart_link}.bak"
+    fi
+    ln -sf "$autostart_target" "$autostart_link"
+    echo "    Linked $autostart_link"
+}
+
+# ---------------------------------------------------------------------------
+# Symlink Claude Code settings — applies bypassPermissions on trusted machines
+# (run this dotfiles bootstrap only on personal/home boxes, never on a
+# work-managed laptop where the security stance differs).
+# ---------------------------------------------------------------------------
+link_claude() {
+    mkdir -p ~/.claude
+    local target="$DOTFILES_DIR/claude/settings.json"
+    local link="$HOME/.claude/settings.json"
+
+    if [ -f "$link" ] && [ ! -L "$link" ]; then
+        echo "==> Backing up existing $link -> ${link}.bak"
+        mv "$link" "${link}.bak"
+    fi
+
+    ln -sf "$target" "$link"
+    echo "==> Linked $link -> $target"
+}
+
+# ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
 install_fish
@@ -319,6 +382,8 @@ link_config
 link_nvim
 link_tmux
 link_xfce
+link_sway
+link_claude
 set_default_shell
 
 echo ""

@@ -1,0 +1,37 @@
+{
+  "enabledPlugins": {
+    "lua-lsp@claude-plugins-official": true
+  },
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Bash(dmesg *)",
+      "Bash(swaymsg reload)",
+      "Bash(swaymsg -t *)",
+      "Bash(swaymsg get_*)",
+      "Bash(pkg info *)",
+      "Bash(pkg search *)",
+      "Bash(pkg version *)",
+      "Bash(zpool status *)",
+      "Bash(zpool list *)",
+      "Bash(zfs list *)",
+      "Bash(zfs get *)",
+      "Bash(swapinfo *)",
+      "Bash(procstat *)",
+      "Bash(sockstat *)",
+      "Bash(usbconfig list *)",
+      "Bash(freebsd-version *)",
+      "Bash(jls *)",
+      "Bash(fc-match *)",
+      "Bash(fc-list *)",
+      "Bash(fc-cache *)",
+      "Bash(pgrep *)",
+      "Bash(cliphist list *)",
+      "Bash(wl-copy)",
+      "Bash(wl-paste *)",
+      "Bash(kldstat *)",
+      "Bash(sysctl -n *)",
+      "Bash(swaynag *)"
+    ]
+  }
+}

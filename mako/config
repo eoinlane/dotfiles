@@ -1,0 +1,23 @@
+font=Noto Sans 11
+background-color=#1e1e2e
+text-color=#cdd6f4
+border-color=#cba6f7
+progress-color=over #45475a
+border-size=2
+border-radius=8
+default-timeout=5000
+ignore-timeout=1
+max-icon-size=48
+padding=12
+margin=8
+anchor=top-right
+width=380
+height=120
+
+[urgency=low]
+border-color=#94e2d5
+default-timeout=3000
+
+[urgency=high]
+border-color=#f38ba8
+default-timeout=0
