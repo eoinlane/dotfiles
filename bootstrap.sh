@@ -363,6 +363,33 @@ link_claude() {
 }
 
 # ---------------------------------------------------------------------------
+# Symlink Zed editor config (all platforms)
+# ---------------------------------------------------------------------------
+link_zed() {
+    echo "==> Linking Zed config..."
+    mkdir -p "$HOME/.config/zed"
+
+    # keymap.json: no secrets, safe to symlink (live-tracked).
+    local kmlink="$HOME/.config/zed/keymap.json"
+    if [ -f "$kmlink" ] && [ ! -L "$kmlink" ]; then
+        echo "    Backing up $kmlink -> ${kmlink}.bak"
+        mv "$kmlink" "${kmlink}.bak"
+    fi
+    ln -sf "$DOTFILES_DIR/zed/keymap.json" "$kmlink"
+    echo "    Linked $kmlink"
+
+    # settings.json: COPIED, not symlinked — it holds a host-specific Ollama
+    # address you fill in per machine (the repo ships an OLLAMA_HOST placeholder).
+    local stlink="$HOME/.config/zed/settings.json"
+    if [ ! -e "$stlink" ]; then
+        cp "$DOTFILES_DIR/zed/settings.json" "$stlink"
+        echo "    Copied settings.json (EDIT it: replace OLLAMA_HOST with your Ollama host:port)"
+    else
+        echo "    settings.json already exists — left untouched (see zed/README.md to re-sync)"
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
 install_fish
@@ -377,6 +404,7 @@ link_tmux
 link_xfce
 link_sway
 link_claude
+link_zed
 set_default_shell
 
 echo ""

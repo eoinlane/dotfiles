@@ -1,0 +1,10 @@
+// Zed user keymap — overrides defaults in every context.
+[
+  {
+    "bindings": {
+      // AI agent panel: explicit, collision-free shortcuts.
+      "cmd-shift-a": "agent::ToggleFocus",
+      "cmd-shift-n": "agent::NewThread"
+    }
+  }
+]

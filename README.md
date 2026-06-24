@@ -7,6 +7,7 @@ Personal configuration for macOS, Ubuntu, and FreeBSD.
 - **`fish/config.fish`** — Fish shell config with Starship prompt and git abbreviations
 - **`nvim/`** — Neovim configuration (lazy.nvim, LSP, Go, AI, and more)
 - **`zellij/`** — Zellij terminal multiplexer config (catppuccin-mocha theme, vim-style keybinds)
+- **`zed/`** — Zed editor config (Catppuccin Mocha, MesloLGS Nerd Font, vim mode, local-Ollama AI). See `zed/README.md` — `settings.json` ships an `OLLAMA_HOST` placeholder you fill in per machine.
 - **`bootstrap.sh`** — One-command install script
 
 ## Quick Start
@@ -23,7 +24,8 @@ The bootstrap script will:
 3. Symlink `fish/config.fish` to `~/.config/fish/config.fish`
 4. Symlink `nvim/` to `~/.config/nvim`
 5. Install and symlink [zellij](https://zellij.dev/) terminal multiplexer
-6. Set fish as your default shell
+6. Link Zed config (symlinks `keymap.json`; copies `settings.json` so you can set your Ollama host)
+7. Set fish as your default shell
 
 Then open Neovim and run `:Lazy sync` to install all plugins.
 
