@@ -4,7 +4,9 @@
     "bindings": {
       // AI agent panel: explicit, collision-free shortcuts.
       "cmd-shift-a": "agent::ToggleFocus",
-      "cmd-shift-n": "agent::NewThread"
+      "cmd-shift-n": "agent::NewThread",
+      // Run the current Julia file (uses tasks.json "Julia: run current file").
+      "cmd-r": ["task::Spawn", { "task_name": "Julia: run current file" }]
     }
   }
 ]

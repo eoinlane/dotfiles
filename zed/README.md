@@ -7,7 +7,11 @@ Font, vim mode, and a local-Ollama AI assistant.
 
 - `settings.json` — main config
 - `keymap.json` — user keybindings (`cmd-shift-a` toggles the AI agent panel,
-  `cmd-shift-n` starts a new agent thread)
+  `cmd-shift-n` starts a new agent thread, `cmd-r` runs the current Julia file)
+- `tasks.json` — global tasks (`Julia: run current file` → `julia $ZED_FILE`,
+  bound to `cmd-r`)
+- `AGENTS.md` — user-level agent rules (tells the AI to emit plain-Unicode math,
+  not LaTeX, since Zed doesn't render `$…$`)
 
 ## Install
 
@@ -16,6 +20,8 @@ Font, vim mode, and a local-Ollama AI assistant.
 ```bash
 mkdir -p ~/.config/zed
 ln -sf ~/dotfiles/zed/keymap.json ~/.config/zed/keymap.json
+ln -sf ~/dotfiles/zed/tasks.json  ~/.config/zed/tasks.json
+ln -sf ~/dotfiles/zed/AGENTS.md   ~/.config/zed/AGENTS.md
 cp -n ~/dotfiles/zed/settings.json ~/.config/zed/settings.json   # copy, then edit the IP
 ```
 
