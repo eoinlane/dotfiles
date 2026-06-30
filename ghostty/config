@@ -12,10 +12,11 @@ command = /opt/homebrew/bin/fish
 # Ghostty has native tabs + splits, so you may not need tmux for simple layouts.
 # Run `ghostty +list-keybinds` to see the defaults, `ghostty +list-themes` for themes.
 
-# Theme. Comment this line out (or delete it) to return to Ghostty's default look.
-# Other Solarized variants: "iTerm2 Solarized Light", "Solarized Dark Higher Contrast",
-# "Solarized Dark Patched", "Solarized Darcula", "Solarized Osaka Night".
-theme = iTerm2 Solarized Dark
+# Theme — Catppuccin Mocha, to match Alacritty, tmux, Zed and Sublime across the
+# estate. Ghostty ships Catppuccin built in (no extension needed).
+# `ghostty +list-themes` to browse; e.g. "catppuccin-latte" for a light variant,
+# or "iTerm2 Solarized Dark" to go back to the old port.
+theme = catppuccin-mocha
 
 # background-opacity = 0.96
 # macos-option-as-alt = true
