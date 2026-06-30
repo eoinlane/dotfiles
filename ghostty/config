@@ -1,0 +1,21 @@
+# Ghostty config — ported from ~/dotfiles/alacritty/alacritty.toml
+
+# Font. Ghostty derives the bold/italic faces from the family automatically,
+# so the three separate entries Alacritty needed collapse to one line.
+font-family = JetBrainsMono Nerd Font
+font-size = 14
+
+# Shell — match Alacritty's explicit fish launch.
+command = /opt/homebrew/bin/fish
+
+# --- Optional Ghostty extras (uncomment to try) ---
+# Ghostty has native tabs + splits, so you may not need tmux for simple layouts.
+# Run `ghostty +list-keybinds` to see the defaults, `ghostty +list-themes` for themes.
+
+# Theme. Comment this line out (or delete it) to return to Ghostty's default look.
+# Other Solarized variants: "iTerm2 Solarized Light", "Solarized Dark Higher Contrast",
+# "Solarized Dark Patched", "Solarized Darcula", "Solarized Osaka Night".
+theme = iTerm2 Solarized Dark
+
+# background-opacity = 0.96
+# macos-option-as-alt = true
