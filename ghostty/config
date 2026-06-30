@@ -13,10 +13,10 @@ command = /opt/homebrew/bin/fish
 # Run `ghostty +list-keybinds` to see the defaults, `ghostty +list-themes` for themes.
 
 # Theme — Catppuccin Mocha, to match Alacritty, tmux, Zed and Sublime across the
-# estate. Ghostty ships Catppuccin built in (no extension needed).
-# `ghostty +list-themes` to browse; e.g. "catppuccin-latte" for a light variant,
-# or "iTerm2 Solarized Dark" to go back to the old port.
-theme = catppuccin-mocha
+# estate. Ghostty bundles it (named with a space + capitals — `ghostty
+# +list-themes` to browse). Use "Catppuccin Latte" for a light variant, or
+# "iTerm2 Solarized Dark" to go back to the old port.
+theme = Catppuccin Mocha
 
 # background-opacity = 0.96
 # macos-option-as-alt = true
