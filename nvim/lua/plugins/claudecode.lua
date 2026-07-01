@@ -1,5 +1,5 @@
--- TRIAL (2026-07-01) — testing coder/claudecode.nvim. NOT committed to the repo
--- yet. If it stays, commit it; if not, delete this file + `:Lazy clean`.
+-- coder/claudecode.nvim — Claude Code integration for nvim (trialled &
+-- kept 2026-07-01). Keys under <leader>a; see below.
 return {
   {
     "coder/claudecode.nvim",
