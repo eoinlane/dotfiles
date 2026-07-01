@@ -1,0 +1,7 @@
+# Global markdownlint config, referenced explicitly by nvim-lint (see
+# lua/plugins/lint.lua) so it applies to markdown edited anywhere, regardless
+# of nvim's cwd. Disables the rules that fight ordinary note-writing.
+default: true
+MD013: false   # line-length — too noisy for prose / wrapped paragraphs
+MD028: false   # no-blanks-blockquote — false-positive on GitHub callouts ([!NOTE] etc.)
+MD033: false   # no-inline-html — we legitimately use <u>…</u> and <br>
