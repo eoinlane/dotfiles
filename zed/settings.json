@@ -1,6 +1,6 @@
 {
   // Zed config mirroring the Sublime Text 4 setup (Catppuccin Mocha +
-  // MesloLGS Nerd Font Mono @ 17, matches Alacritty).
+  // JetBrainsMono NFM @ 17, matches Alacritty).
   //
   // NOTE: the Ollama `api_url` below is a PLACEHOLDER (OLLAMA_HOST). On a real
   // machine, replace it with your Ollama server's host:port (this repo is
@@ -25,14 +25,14 @@
 
   // ── Font ────────────────────────────────────────────────────────────
   // calt enables ligatures (Meslo has a few; harmless if absent).
-  "buffer_font_family": "MesloLGS Nerd Font Mono",
+  "buffer_font_family": "JetBrainsMono NFM",
   "buffer_font_size": 17,
   "buffer_font_features": { "calt": true },
   "buffer_line_height": "comfortable",
-  "ui_font_family": "MesloLGS Nerd Font Mono",
+  "ui_font_family": "JetBrainsMono NFM",
   "ui_font_size": 15,
   "terminal": {
-    "font_family": "MesloLGS Nerd Font Mono",
+    "font_family": "JetBrainsMono NFM",
     "font_size": 15,
     "copy_on_select": true
   },
