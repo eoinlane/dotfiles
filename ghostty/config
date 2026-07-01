@@ -3,7 +3,7 @@
 # Font. Ghostty derives the bold/italic faces from the family automatically,
 # so the three separate entries Alacritty needed collapse to one line.
 font-family = JetBrainsMono Nerd Font
-font-size = 18
+font-size = 20
 
 # Shell — match Alacritty's explicit fish launch.
 command = /opt/homebrew/bin/fish
