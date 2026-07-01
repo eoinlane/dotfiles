@@ -8,6 +8,9 @@ if test (uname -s) = Darwin
     # juliaup (Julia version manager)
     fish_add_path $HOME/.juliaup/bin
 
+    # User-local bins (claude, knowledge-base scripts, pipx, etc.)
+    fish_add_path $HOME/.local/bin
+
     if status is-interactive
         # Notes (iCloud)
         abbr -a notes 'cd ~/Library/Mobile\ Documents/com~apple~CloudDocs/My\ Notes'

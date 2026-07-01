@@ -32,8 +32,11 @@ if status is-interactive
         abbr -a la 'ls -la'
     end
 
-    # Navigation
-    abbr -a cd z
+    # Navigation — only remap cd to zoxide if zoxide is actually installed,
+    # otherwise `cd` expands to `z` and errors with "Unknown command: z".
+    if command -v zoxide &>/dev/null
+        abbr -a cd z
+    end
 
     # tmux session launcher
     abbr -a home '~/dotfiles/tmux/start-home.sh'
