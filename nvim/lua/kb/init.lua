@@ -203,9 +203,9 @@ function M.stale() run_query("stale-nudge", "stale-nudge", {}) end
 
 function M.open(proj)
   if proj and proj ~= "" then
-    run_query("open:" .. proj, "open", { "--project", proj, "--ids" })
+    run_query("open:" .. proj, "open", { "--project", proj })
   else
-    run_query("open", "open", { "--ids" })
+    run_query("open", "open", {})
   end
 end
 function M.prep(name)
@@ -231,32 +231,46 @@ function M.done(target)
   end)
 end
 
--- Interactive close: grab the #id the list emits (:KBOpen --ids), close it in
--- the graph, and tick the line in place. Bound to <leader>kx inside kb:// lists.
+-- Interactive close: close the action item on the current line, ticking it in
+-- place. Bound to <leader>kx inside kb:// lists.
+--
+-- Closes by the item TEXT, NOT by the #id. The graph reassigns ids on every
+-- (nightly AND intraday) rebuild, so a buffer's ids go stale and closing by id
+-- can hit the wrong item. Text is stable across rebuilds, and `done "text"`
+-- re-resolves it to the current row at close time; it also refuses to act on an
+-- ambiguous (multi-match) text, so we only tick the line when it reports Closed.
 function M.done_line()
   local line = vim.api.nvim_get_current_line()
-  local id = line:match("#(%d+)")
-  if not id then
-    vim.notify("kb: no #id on this line — open the list with :KBOpen (it adds ids)", vim.log.levels.WARN)
+  if line:match("%[[xX]%]") then
+    vim.notify("kb: already ticked", vim.log.levels.INFO)
     return
   end
-  if vim.fn.confirm("Close item #" .. id .. " in the graph?", "&Yes\n&No", 2) ~= 1 then
+  -- Text = everything after the "owner:" that follows the "[…]" metadata.
+  local text = line:match("%][^:]*:%s*(.+)$")
+  text = text and vim.trim(text) or ""
+  if #text < 8 then
+    vim.notify("kb: no closable item on this line", vim.log.levels.WARN)
+    return
+  end
+  if vim.fn.confirm("Close this item?\n  " .. text:sub(1, 72) .. (#text > 72 and "…" or "") .. "\nProceed?", "&Yes\n&No", 2) ~= 1 then
     return
   end
   local buf = vim.api.nvim_get_current_buf()
   local row = vim.api.nvim_win_get_cursor(0)[1]
-  vim.system(query_cmd("done", { id }), { text = true }, function(res)
+  vim.system(query_cmd("done", { text }), { text = true }, function(res)
     vim.schedule(function()
-      if res.code ~= 0 then
-        vim.notify(("kb: close #%s failed\n%s"):format(id, res.stderr or ""), vim.log.levels.ERROR)
+      local out = vim.trim((res.stdout or "") .. (res.stderr or ""))
+      -- query_graph prints "Closed #N: …" on a unique match; anything else
+      -- (no match, or "Found N matching…") means we must NOT tick the line.
+      if res.code ~= 0 or not out:match("Closed #") then
+        vim.notify("kb: not closed — " .. out:sub(1, 200), vim.log.levels.WARN)
         return
       end
-      -- tick the line as feedback (buffer is non-modifiable)
       local was = vim.bo[buf].modifiable
       vim.bo[buf].modifiable = true
       vim.api.nvim_buf_set_lines(buf, row - 1, row, false, { (line:gsub("%[ %]", "[x]", 1)) })
       vim.bo[buf].modifiable = was
-      vim.notify("kb: closed #" .. id, vim.log.levels.INFO)
+      vim.notify("kb: " .. out:sub(1, 120), vim.log.levels.INFO)
     end)
   end)
 end
