@@ -53,45 +53,62 @@ end
 -- Claude :terminal; (3) otherwise split. This keeps `sb` at two columns.
 local function open_scratch(title, lines)
   local name = "kb://" .. title
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.bo[buf].bufhidden = "wipe"
-  vim.bo[buf].filetype = "markdown"
-  pcall(vim.api.nvim_buf_set_name, buf, name)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.bo[buf].modifiable = false
-
-  local wins = vim.api.nvim_tabpage_list_wins(0)
-  local target
-  -- (1) reuse an existing kb:// panel
-  for _, w in ipairs(wins) do
-    if vim.api.nvim_win_is_valid(w)
-      and vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(w)):match("kb://")
+  -- Reuse an existing kb://<title> buffer if one is loaded, so a re-run
+  -- refreshes it in place. (Creating a fresh buffer would collide on the name
+  -- and leave the new one unnamed.) Otherwise make a scratch buffer.
+  local buf
+  for _, b in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(b)
+      and vim.api.nvim_buf_get_name(b):match("kb://" .. vim.pesc(title) .. "$")
     then
-      target = w
+      buf = b
       break
     end
   end
-  -- (2) else, if there's more than one window, reuse a non-terminal editor window
-  if not target and #wins > 1 then
-    for _, w in ipairs(wins) do
-      if vim.api.nvim_win_is_valid(w)
-        and vim.bo[vim.api.nvim_win_get_buf(w)].buftype ~= "terminal"
-      then
-        target = w
-        break
-      end
+  if not buf then
+    buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[buf].bufhidden = "wipe"
+    vim.bo[buf].filetype = "markdown"
+    pcall(vim.api.nvim_buf_set_name, buf, name)
+  end
+  vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+
+  -- Already displayed? just focus it. Else pick a target window: a non-terminal
+  -- editor window in a multi-window layout (skip the Claude :terminal), else split.
+  local shown
+  for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.api.nvim_win_get_buf(w) == buf then
+      shown = w
+      break
     end
   end
-  if target then
-    vim.api.nvim_win_set_buf(target, buf)
-    vim.api.nvim_set_current_win(target)
+  if shown then
+    vim.api.nvim_set_current_win(shown)
   else
-    -- (3) single window (e.g. bare M3 session): split so the editor is preserved
-    vim.cmd("botright vsplit")
-    vim.api.nvim_win_set_buf(0, buf)
+    local wins = vim.api.nvim_tabpage_list_wins(0)
+    local target
+    if #wins > 1 then
+      for _, w in ipairs(wins) do
+        if vim.api.nvim_win_is_valid(w)
+          and vim.bo[vim.api.nvim_win_get_buf(w)].buftype ~= "terminal"
+        then
+          target = w
+          break
+        end
+      end
+    end
+    if target then
+      vim.api.nvim_win_set_buf(target, buf)
+      vim.api.nvim_set_current_win(target)
+    else
+      vim.cmd("botright vsplit")
+      vim.api.nvim_win_set_buf(0, buf)
+    end
   end
-  -- <leader>kx closes the action item on the current line (by text; see
-  -- M.done_line). Buffer-local so it only fires inside kb:// lists.
+  -- <leader>kx closes the action item on the current line (by close-link id;
+  -- see M.done_line). Buffer-local so it only fires inside kb:// lists.
   vim.keymap.set("n", "<leader>kx", function() M.done_line() end,
     { buffer = buf, desc = "KB: close item on this line" })
   return buf
