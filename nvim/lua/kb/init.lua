@@ -325,10 +325,18 @@ function M.done_line()
         vim.notify("kb: not closed — " .. out:sub(1, 200), vim.log.levels.WARN)
         return
       end
-      local was = vim.bo[buf].modifiable
-      vim.bo[buf].modifiable = true
-      vim.api.nvim_buf_set_lines(buf, row - 1, row, false, { (line:gsub("%[ %]", "[x]", 1)) })
-      vim.bo[buf].modifiable = was
+      -- Remove the closed item's line for instant "it's gone" feedback. Guard:
+      -- only delete if that row still holds the same line (the buffer may have
+      -- been refreshed while the async close was in flight).
+      if vim.api.nvim_buf_is_valid(buf)
+        and row <= vim.api.nvim_buf_line_count(buf)
+        and vim.api.nvim_buf_get_lines(buf, row - 1, row, false)[1] == line
+      then
+        local was = vim.bo[buf].modifiable
+        vim.bo[buf].modifiable = true
+        vim.api.nvim_buf_set_lines(buf, row - 1, row, false, {})
+        vim.bo[buf].modifiable = was
+      end
       vim.notify("kb: " .. out:sub(1, 120), vim.log.levels.INFO)
     end)
   end)
