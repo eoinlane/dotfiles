@@ -49,36 +49,29 @@ end
 -- Open text in a throwaway markdown buffer so render-markdown.nvim styles it.
 local function open_scratch(title, lines)
   local name = "kb://" .. title
-  -- Reuse the same-named buffer if it already exists (re-running a query updates
-  -- it in place, avoiding a name clash + unnamed buffers), and reuse any open
-  -- kb:// window so panels replace rather than stack into new splits.
-  local buf, win
-  for _, b in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_get_name(b) == name then buf = b end
-  end
+  -- Close any existing kb:// windows first, so we deterministically end with a
+  -- single panel — no stacking, no stale-window races, no empty leftovers.
+  -- (Those buffers are bufhidden=wipe, so closing their window drops them.)
   for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    if vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(w)):match("^kb://") then win = w end
+    if #vim.api.nvim_tabpage_list_wins(0) > 1
+      and vim.api.nvim_win_is_valid(w)
+      and vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(w)):match("kb://")
+    then
+      pcall(vim.api.nvim_win_close, w, true)
+    end
   end
-  if not (buf and vim.api.nvim_buf_is_valid(buf)) then
-    buf = vim.api.nvim_create_buf(false, true)
-    vim.bo[buf].bufhidden = "wipe"
-    vim.bo[buf].filetype = "markdown"
-    pcall(vim.api.nvim_buf_set_name, buf, name)
-    -- <leader>kx closes the action item on the current line (by text; see
-    -- M.done_line). Buffer-local so it only fires inside kb:// lists.
-    vim.keymap.set("n", "<leader>kx", function() M.done_line() end,
-      { buffer = buf, desc = "KB: close item on this line" })
-  end
-  vim.bo[buf].modifiable = true
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].filetype = "markdown"
+  pcall(vim.api.nvim_buf_set_name, buf, name)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
-  if win and vim.api.nvim_win_is_valid(win) then
-    vim.api.nvim_win_set_buf(win, buf)
-    vim.api.nvim_set_current_win(win)
-  else
-    vim.cmd("botright vsplit")
-    vim.api.nvim_win_set_buf(0, buf)
-  end
+  vim.cmd("botright vsplit")
+  vim.api.nvim_win_set_buf(0, buf)
+  -- <leader>kx closes the action item on the current line (by text; see
+  -- M.done_line). Buffer-local so it only fires inside kb:// lists.
+  vim.keymap.set("n", "<leader>kx", function() M.done_line() end,
+    { buffer = buf, desc = "KB: close item on this line" })
   return buf
 end
 
