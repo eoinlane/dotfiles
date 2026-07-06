@@ -56,19 +56,34 @@ local function open_scratch(title, lines)
   vim.bo[buf].modifiable = false
   vim.cmd("botright vsplit")
   vim.api.nvim_win_set_buf(0, buf)
+  -- <leader>kx closes the action item on the current line (needs a #id, which
+  -- :KBOpen emits). Buffer-local so it only fires inside these kb:// lists.
+  vim.keymap.set("n", "<leader>kx", function() M.done_line() end,
+    { buffer = buf, desc = "KB: close item on this line" })
   return buf
 end
 
--- SSH-exec `python3 <query> <verb> <args...>` on the M3; stream stdout to a scratch buf.
-local function run_query(title, verb, args)
+-- Build the query command. On the primary M3 (is_local) run query_graph.py
+-- directly; from a satellite (M1) SSH-exec it on the M3. Same module, both roles.
+local function query_cmd(verb, args)
+  if M.config.is_local then
+    local cmd = { "python3", vim.fn.expand(M.config.query), verb }
+    for _, a in ipairs(args or {}) do
+      cmd[#cmd + 1] = tostring(a)
+    end
+    return cmd
+  end
   local remote = "python3 " .. M.config.query .. " " .. verb
   for _, a in ipairs(args or {}) do
     remote = remote .. " " .. shq(a)
   end
-  local cmd = { "ssh", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes", M.config.host, remote }
+  return { "ssh", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes", M.config.host, remote }
+end
 
+-- Run `query_graph.py <verb> <args...>`; stream stdout to a scratch buffer.
+local function run_query(title, verb, args)
   vim.notify("kb: " .. verb .. (args and #args > 0 and (" " .. table.concat(args, " ")) or "") .. " …", vim.log.levels.INFO)
-  vim.system(cmd, { text = true }, function(res)
+  vim.system(query_cmd(verb, args), { text = true }, function(res)
     vim.schedule(function()
       if res.code ~= 0 then
         vim.notify(("kb: `%s` failed (exit %d)\n%s"):format(verb, res.code, res.stderr or ""), vim.log.levels.ERROR)
@@ -148,6 +163,10 @@ function M.follow_wikilink()
 end
 
 function M.sync()
+  if M.config.is_local then
+    vim.notify("kb: on the primary (M3) — KB is local, no sync needed", vim.log.levels.INFO)
+    return
+  end
   local dest = kb_dir()
   vim.fn.mkdir(dest, "p")
   local cmd = {
@@ -184,9 +203,9 @@ function M.stale() run_query("stale-nudge", "stale-nudge", {}) end
 
 function M.open(proj)
   if proj and proj ~= "" then
-    run_query("open:" .. proj, "open", { "--project", proj })
+    run_query("open:" .. proj, "open", { "--project", proj, "--ids" })
   else
-    run_query("open", "open", {})
+    run_query("open", "open", { "--ids" })
   end
 end
 function M.prep(name)
@@ -202,13 +221,43 @@ function M.synth(name)
   arg_or_prompt(name, "Synthesise person: ", function(v) run_query("synthesise:" .. v, "synthesise", { v }) end)
 end
 
--- WRITE path — mutates graph.db on the M3. Confirm first.
+-- WRITE path — mutates graph.db. Confirm first.
 function M.done(target)
   arg_or_prompt(target, "Close item (id or search text): ", function(v)
-    local ok = vim.fn.confirm("Mark done on the M3 graph:\n  " .. v .. "\nProceed?", "&Yes\n&No", 2)
+    local ok = vim.fn.confirm("Mark done in the graph:\n  " .. v .. "\nProceed?", "&Yes\n&No", 2)
     if ok == 1 then
       run_query("done:" .. v, "done", { v })
     end
+  end)
+end
+
+-- Interactive close: grab the #id the list emits (:KBOpen --ids), close it in
+-- the graph, and tick the line in place. Bound to <leader>kx inside kb:// lists.
+function M.done_line()
+  local line = vim.api.nvim_get_current_line()
+  local id = line:match("#(%d+)")
+  if not id then
+    vim.notify("kb: no #id on this line — open the list with :KBOpen (it adds ids)", vim.log.levels.WARN)
+    return
+  end
+  if vim.fn.confirm("Close item #" .. id .. " in the graph?", "&Yes\n&No", 2) ~= 1 then
+    return
+  end
+  local buf = vim.api.nvim_get_current_buf()
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  vim.system(query_cmd("done", { id }), { text = true }, function(res)
+    vim.schedule(function()
+      if res.code ~= 0 then
+        vim.notify(("kb: close #%s failed\n%s"):format(id, res.stderr or ""), vim.log.levels.ERROR)
+        return
+      end
+      -- tick the line as feedback (buffer is non-modifiable)
+      local was = vim.bo[buf].modifiable
+      vim.bo[buf].modifiable = true
+      vim.api.nvim_buf_set_lines(buf, row - 1, row, false, { (line:gsub("%[ %]", "[x]", 1)) })
+      vim.bo[buf].modifiable = was
+      vim.notify("kb: closed #" .. id, vim.log.levels.INFO)
+    end)
   end)
 end
 
@@ -222,6 +271,19 @@ function M.setup(opts)
   M.config.host = vim.g.kb_host or M.config.host
   M.config.remote = vim.g.kb_remote or M.config.remote
   M.config.query = vim.g.kb_query or M.config.query
+
+  -- Detect role: on the primary M3 the KB + query layer are local, so run
+  -- query_graph.py directly and read the KB in place; from a satellite (M1)
+  -- fall through to the SSH/rsync seam. Override with vim.g.kb_local.
+  if vim.g.kb_local ~= nil then
+    M.config.is_local = vim.g.kb_local
+  elseif M.config.is_local == nil then
+    M.config.is_local = vim.fn.filereadable(vim.fn.expand(M.config.query)) == 1
+      and vim.fn.isdirectory(vim.fn.expand("~/knowledge_base")) == 1
+  end
+  if M.config.is_local then
+    M.config.dir = "~/knowledge_base" -- primary reads its own KB in place, no mirror
+  end
 
   local c = vim.api.nvim_create_user_command
   -- read
