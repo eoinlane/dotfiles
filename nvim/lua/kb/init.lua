@@ -47,27 +47,49 @@ local function shq(s)
 end
 
 -- Open text in a throwaway markdown buffer so render-markdown.nvim styles it.
+-- Window targeting: land the output where you're reading, not in a new far-right
+-- column. Priority: (1) an existing kb:// panel — reuse it, no pile-up; (2) in a
+-- multi-window layout (e.g. `sb`'s editor|claude), the editor pane, skipping the
+-- Claude :terminal; (3) otherwise split. This keeps `sb` at two columns.
 local function open_scratch(title, lines)
   local name = "kb://" .. title
-  -- Close any existing kb:// windows first, so we deterministically end with a
-  -- single panel — no stacking, no stale-window races, no empty leftovers.
-  -- (Those buffers are bufhidden=wipe, so closing their window drops them.)
-  for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    if #vim.api.nvim_tabpage_list_wins(0) > 1
-      and vim.api.nvim_win_is_valid(w)
-      and vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(w)):match("kb://")
-    then
-      pcall(vim.api.nvim_win_close, w, true)
-    end
-  end
   local buf = vim.api.nvim_create_buf(false, true)
   vim.bo[buf].bufhidden = "wipe"
   vim.bo[buf].filetype = "markdown"
   pcall(vim.api.nvim_buf_set_name, buf, name)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   vim.bo[buf].modifiable = false
-  vim.cmd("botright vsplit")
-  vim.api.nvim_win_set_buf(0, buf)
+
+  local wins = vim.api.nvim_tabpage_list_wins(0)
+  local target
+  -- (1) reuse an existing kb:// panel
+  for _, w in ipairs(wins) do
+    if vim.api.nvim_win_is_valid(w)
+      and vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(w)):match("kb://")
+    then
+      target = w
+      break
+    end
+  end
+  -- (2) else, if there's more than one window, reuse a non-terminal editor window
+  if not target and #wins > 1 then
+    for _, w in ipairs(wins) do
+      if vim.api.nvim_win_is_valid(w)
+        and vim.bo[vim.api.nvim_win_get_buf(w)].buftype ~= "terminal"
+      then
+        target = w
+        break
+      end
+    end
+  end
+  if target then
+    vim.api.nvim_win_set_buf(target, buf)
+    vim.api.nvim_set_current_win(target)
+  else
+    -- (3) single window (e.g. bare M3 session): split so the editor is preserved
+    vim.cmd("botright vsplit")
+    vim.api.nvim_win_set_buf(0, buf)
+  end
   -- <leader>kx closes the action item on the current line (by text; see
   -- M.done_line). Buffer-local so it only fires inside kb:// lists.
   vim.keymap.set("n", "<leader>kx", function() M.done_line() end,
@@ -257,19 +279,27 @@ function M.done_line()
     vim.notify("kb: already ticked", vim.log.levels.INFO)
     return
   end
-  -- Text = everything after the "owner:" that follows the "[…]" metadata.
-  local text = line:match("%][^:]*:%s*(.+)$")
-  text = text and vim.trim(text) or ""
-  if #text < 8 then
-    vim.notify("kb: no closable item on this line", vim.log.levels.WARN)
-    return
+  -- Prefer the item ID carried in the [close](…?subject=close%20<id>) link:
+  -- unambiguous, and works on every brief line (pipeline / commitments / owes).
+  -- Fall back to the task text (the "owner: text" list format) when the line
+  -- has no close link.
+  local id = line:match("close%%20(%d+)") or line:match("close (%d+)")
+  local target, label = id, id and ("#" .. id) or nil
+  if not target then
+    local text = line:match("%][^:]*:%s*(.+)$")
+    text = text and vim.trim(text) or ""
+    if #text < 8 then
+      vim.notify("kb: no closable item on this line", vim.log.levels.WARN)
+      return
+    end
+    target, label = text, text:sub(1, 72) .. (#text > 72 and "…" or "")
   end
-  if vim.fn.confirm("Close this item?\n  " .. text:sub(1, 72) .. (#text > 72 and "…" or "") .. "\nProceed?", "&Yes\n&No", 2) ~= 1 then
+  if vim.fn.confirm("Close this item?\n  " .. label .. "\nProceed?", "&Yes\n&No", 2) ~= 1 then
     return
   end
   local buf = vim.api.nvim_get_current_buf()
   local row = vim.api.nvim_win_get_cursor(0)[1]
-  vim.system(query_cmd("done", { text }), { text = true }, function(res)
+  vim.system(query_cmd("done", { target }), { text = true }, function(res)
     vim.schedule(function()
       local out = vim.trim((res.stdout or "") .. (res.stderr or ""))
       -- query_graph prints "Closed #N: …" on a unique match; anything else
