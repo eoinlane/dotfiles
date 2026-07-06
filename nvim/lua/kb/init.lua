@@ -305,6 +305,10 @@ function M.done_line()
   if not target then
     local text = line:match("%][^:]*:%s*(.+)$")
     text = text and vim.trim(text) or ""
+    -- Drop the brief's trailing "…" truncation: `done` matches via LIKE on the
+    -- stored text, and the ellipsis char isn't in the DB, so a truncated line
+    -- would never match. The un-truncated prefix still matches uniquely.
+    text = vim.trim((text:gsub("…%s*$", "")))
     if #text < 8 then
       vim.notify("kb: no closable item on this line", vim.log.levels.WARN)
       return
