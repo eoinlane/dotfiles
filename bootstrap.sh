@@ -402,6 +402,21 @@ link_zed() {
 }
 
 # ---------------------------------------------------------------------------
+# Symlink ~/.local/bin helper scripts (all platforms)
+# ---------------------------------------------------------------------------
+link_bin() {
+    echo "==> Linking ~/.local/bin scripts..."
+    mkdir -p "$HOME/.local/bin"
+    for script in "$DOTFILES_DIR"/bin/*; do
+        [ -f "$script" ] || continue
+        local name
+        name="$(basename "$script")"
+        ln -sf "$script" "$HOME/.local/bin/$name"
+        echo "    Linked ~/.local/bin/$name"
+    done
+}
+
+# ---------------------------------------------------------------------------
 # Run
 # ---------------------------------------------------------------------------
 install_fish
@@ -417,6 +432,7 @@ link_xfce
 link_sway
 link_claude
 link_zed
+link_bin
 set_default_shell
 
 echo ""

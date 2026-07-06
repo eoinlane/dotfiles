@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# kb-clip — convert a Markdown file and load it onto the macOS clipboard,
+# ready to paste (Cmd+V) into Outlook / Mail / any editor.
+#
+# Usage:  kb-clip <file.md>            # rich text (RTF) — formatted paste (default)
+#         kb-clip --text <file.md>     # plain text, reflowable (no hard wraps)
+#         kb-clip --html <file.md>     # open an HTML render in the browser
+#                                      #   (best table fidelity: Cmd+A, Cmd+C there)
+set -euo pipefail
+
+mode=rtf
+case "${1:-}" in
+  --text) mode=text; shift ;;
+  --html) mode=html; shift ;;
+esac
+
+file="${1:-}"
+[[ -n "$file" ]] || { echo "usage: kb-clip [--text|--html] <file.md>" >&2; exit 2; }
+[[ -f "$file" ]] || { echo "kb-clip: no such file: $file" >&2; exit 1; }
+command -v pandoc >/dev/null || { echo "kb-clip: pandoc not found (brew install pandoc)" >&2; exit 1; }
+
+case "$mode" in
+  text)
+    # plain text, one line per paragraph so the mail client reflows it
+    pandoc -f gfm -t plain --wrap=none "$file" | pbcopy
+    echo "✓ copied plain text from $(basename "$file") — paste with Cmd+V (paste before copying anything else)"
+    ;;
+  html)
+    out="${TMPDIR:-/tmp}/kb-clip.$$.html"
+    pandoc -f gfm -t html5 -s -o "$out" "$file"
+    open "$out"
+    echo "✓ opened HTML render of $(basename "$file") — select all (Cmd+A), copy (Cmd+C), paste into Outlook"
+    ;;
+  rtf)
+    rtf="${TMPDIR:-/tmp}/kb-clip.$$.rtf"
+    trap 'rm -f "$rtf"' EXIT
+    pandoc -f gfm -s -o "$rtf" "$file"
+    osascript -e "set the clipboard to (read (POSIX file \"$rtf\") as «class RTF »)"
+    echo "✓ copied rich text from $(basename "$file") — paste with Cmd+V (paste before copying anything else)"
+    ;;
+esac

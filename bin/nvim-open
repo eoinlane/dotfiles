@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# nvim-open — open file(s) as buffers in the running nvim (current tabpage),
+# resolving the RPC socket automatically. Companion to kb-clip.
+#
+# Opens as BUFFERS (matches your bufferline), never new tabpages.
+# Socket resolution order: $NVIM (inside :terminal) -> fixed socket -> lsof scan.
+#
+# Usage:  nvim-open <file.md> [more files...]
+set -euo pipefail
+
+# matches vim.fn.stdpath("cache") (nvim uses $XDG_CACHE_HOME/nvim, default ~/.cache/nvim)
+FIXED="${XDG_CACHE_HOME:-$HOME/.cache}/nvim/server.sock"
+
+resolve_sock() {
+  if [[ -n "${NVIM:-}" && -S "${NVIM}" ]]; then echo "$NVIM"; return; fi
+  if [[ -S "$FIXED" ]] && nvim --server "$FIXED" --remote-expr "1" >/dev/null 2>&1; then
+    echo "$FIXED"; return
+  fi
+  for pid in $(pgrep -x nvim); do
+    local s
+    s=$(lsof -p "$pid" 2>/dev/null | grep -oE '/[^ ]*nvim\.[0-9]+\.0' | head -1)
+    [[ -n "$s" ]] && { echo "$s"; return; }
+  done
+}
+
+[[ $# -ge 1 ]] || { echo "usage: nvim-open <file> [file...]" >&2; exit 2; }
+SOCK="$(resolve_sock)"
+[[ -n "$SOCK" ]] || { echo "nvim-open: no running nvim found" >&2; exit 1; }
+
+opened=()
+for f in "$@"; do
+  [[ -f "$f" ]] || { echo "nvim-open: no such file: $f" >&2; continue; }
+  abs="$(cd "$(dirname "$f")" && pwd)/$(basename "$f")"
+  # --remote does :edit in the current window -> adds a buffer, no new tabpage
+  nvim --server "$SOCK" --remote "$abs"
+  opened+=("$(basename "$f")")
+done
+[[ ${#opened[@]} -gt 0 ]] && echo "✓ opened in nvim (buffer): ${opened[*]}"
