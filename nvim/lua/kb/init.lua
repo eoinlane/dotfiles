@@ -23,6 +23,7 @@ M.config = {
   host = "eoin@100.103.128.44", -- M3 over Tailscale (MagicDNS off; use tailnet IP)
   remote = "eoin@100.103.128.44:knowledge_base/", -- rsync source
   query = "~/query_graph.py", -- query_graph.py on the M3
+  graph = "~/graph_export.py", -- graph_export.py on the M3 (browser graph-viz)
 }
 
 -- ---------------------------------------------------------------------------
@@ -350,12 +351,37 @@ end
 -- setup
 -- ---------------------------------------------------------------------------
 
+-- Graph-viz escape hatch — render a person's neighbourhood as an interactive
+-- browser graph (the visual sibling of the text queries). M3-local for now:
+-- graph.db + the browser live where the primary is.
+function M.graph(name)
+  if not M.config.is_local then
+    vim.notify("kb: :KBGraph runs on the primary (M3) for now — graph.db + browser are there", vim.log.levels.WARN)
+    return
+  end
+  arg_or_prompt(name, "Graph neighbourhood for person: ", function(v)
+    vim.notify("kb: graph " .. v .. " …", vim.log.levels.INFO)
+    vim.system({ "python3", vim.fn.expand(M.config.graph), "--person", v, "--open" },
+      { text = true }, function(res)
+        vim.schedule(function()
+          local out = vim.trim((res.stdout or "") .. (res.stderr or ""))
+          if res.code == 0 then
+            vim.notify("kb: " .. out:sub(1, 140), vim.log.levels.INFO)
+          else
+            vim.notify("kb: graph failed — " .. out:sub(1, 200), vim.log.levels.ERROR)
+          end
+        end)
+      end)
+  end)
+end
+
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
   M.config.dir = vim.g.kb_dir or M.config.dir
   M.config.host = vim.g.kb_host or M.config.host
   M.config.remote = vim.g.kb_remote or M.config.remote
   M.config.query = vim.g.kb_query or M.config.query
+  M.config.graph = vim.g.kb_graph or M.config.graph
 
   -- Detect role: on the primary M3 the KB + query layer are local, so run
   -- query_graph.py directly and read the KB in place; from a satellite (M1)
@@ -393,6 +419,7 @@ function M.setup(opts)
   c("KBSynth", function(a) M.synth(a.args) end, { nargs = "?", desc = "KB: synthesise [person]" })
   c("KBTags", function(a) M.tags(a.args) end, { nargs = "?", desc = "KB: tags [search]" })
   c("KBDone", function(a) M.done(a.args) end, { nargs = "?", desc = "KB: mark done [id] (writes M3)" })
+  c("KBGraph", function(a) M.graph(a.args) end, { nargs = "?", desc = "KB: graph neighbourhood [person] (browser)" })
 
   -- buffer-local wikilink follow inside the mirror
   vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
