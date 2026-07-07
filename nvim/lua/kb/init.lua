@@ -351,6 +351,23 @@ end
 -- setup
 -- ---------------------------------------------------------------------------
 
+-- Graph analytics (text rankings) — the insight a hairball can't give.
+function M.bottlenecks(proj)
+  if proj and proj ~= "" then
+    run_query("bottlenecks:" .. proj, "bottlenecks", { "--project", proj })
+  else
+    run_query("bottlenecks", "bottlenecks", {})
+  end
+end
+
+function M.brokers(proj)
+  if proj and proj ~= "" then
+    run_query("brokers:" .. proj, "brokers", { "--project", proj })
+  else
+    run_query("brokers", "brokers", {})
+  end
+end
+
 -- Graph-viz escape hatch — render a person's neighbourhood as an interactive
 -- browser graph (the visual sibling of the text queries). M3-local for now:
 -- graph.db + the browser live where the primary is.
@@ -420,6 +437,8 @@ function M.setup(opts)
   c("KBTags", function(a) M.tags(a.args) end, { nargs = "?", desc = "KB: tags [search]" })
   c("KBDone", function(a) M.done(a.args) end, { nargs = "?", desc = "KB: mark done [id] (writes M3)" })
   c("KBGraph", function(a) M.graph(a.args) end, { nargs = "?", desc = "KB: graph neighbourhood [person] (browser)" })
+  c("KBBottlenecks", function(a) M.bottlenecks(a.args) end, { nargs = "?", desc = "KB: who's blocking [project]" })
+  c("KBBrokers", function(a) M.brokers(a.args) end, { nargs = "?", desc = "KB: who bridges clusters [project]" })
 
   -- buffer-local wikilink follow inside the mirror
   vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
