@@ -370,8 +370,12 @@ end
 
 -- Insight digest — the readable insight surface: where work is stuck, what's
 -- gone stale, who bridges your clusters, which relationships are cooling.
-function M.insights()
-  run_query("insights", "insights", {})
+function M.insights(proj)
+  if proj and proj ~= "" then
+    run_query("insights:" .. proj, "insights", { "--project", proj })
+  else
+    run_query("insights", "insights", {})
+  end
 end
 
 -- Graph-viz escape hatch — render a person's neighbourhood as an interactive
@@ -445,7 +449,7 @@ function M.setup(opts)
   c("KBGraph", function(a) M.graph(a.args) end, { nargs = "?", desc = "KB: graph neighbourhood [person] (browser)" })
   c("KBBottlenecks", function(a) M.bottlenecks(a.args) end, { nargs = "?", desc = "KB: who's blocking [project]" })
   c("KBBrokers", function(a) M.brokers(a.args) end, { nargs = "?", desc = "KB: who bridges clusters [project]" })
-  c("KBInsights", M.insights, { desc = "KB: insight digest (stuck / stale / brokers / cooling)" })
+  c("KBInsights", function(a) M.insights(a.args) end, { nargs = "?", desc = "KB: insight digest [project]" })
 
   -- buffer-local wikilink follow inside the mirror
   vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
