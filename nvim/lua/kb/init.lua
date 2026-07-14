@@ -304,7 +304,9 @@ function M.done_line()
   local id = line:match("close%%20(%d+)") or line:match("close (%d+)")
   local target, label = id, id and ("#" .. id) or nil
   if not target then
-    local text = line:match("%][^:]*:%s*(.+)$")
+    -- Brief "owner owes since YYYY-MM-DD: text", else KBOpen "[…] owner: text".
+    local text = line:match("owes since %d%d%d%d%-%d%d%-%d%d:%s*(.+)$")
+      or line:match("%][^:]*:%s*(.+)$")
     text = text and vim.trim(text) or ""
     -- Drop the brief's trailing "…" truncation: `done` matches via LIKE on the
     -- stored text, and the ellipsis char isn't in the DB, so a truncated line
