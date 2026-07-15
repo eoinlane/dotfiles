@@ -10,4 +10,6 @@ dir="${SECONDBRAIN:-$HOME/Documents/secondbrain}"
 cd "$dir"
 
 # Split Claude right, focus the left editor window, then load the brief into it.
-exec nvim -c 'botright vsplit | terminal claude' -c 'wincmd h' -c 'KBBrief'
+# kb.nvim loads on VeryLazy, so force it in first — else :KBBrief isn't defined
+# yet at -c time (E492).
+exec nvim -c 'botright vsplit | terminal claude' -c 'wincmd h' -c 'Lazy! load kb.nvim' -c 'KBBrief'
