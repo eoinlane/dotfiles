@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# sbb — sb + today's brief. Same two-column layout as `sb` (nvim left, Claude
+# :terminal right), but the left column opens on today's :KBBrief instead of a
+# blank buffer. The brief query runs over the SSH seam to the M3, so it fills in
+# a moment after nvim starts.
+set -euo pipefail
+
+dir="${SECONDBRAIN:-$HOME/Documents/secondbrain}"
+[[ -d "$dir" ]] || { echo "sbb: no such dir: $dir (set \$SECONDBRAIN to override)" >&2; exit 1; }
+cd "$dir"
+
+# Split Claude right, focus the left editor window, then load the brief into it.
+exec nvim -c 'botright vsplit | terminal claude' -c 'wincmd h' -c 'KBBrief'
