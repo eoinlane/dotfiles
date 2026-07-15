@@ -12,4 +12,5 @@ cd "$dir"
 # Split Claude right, focus the left editor window, then load the brief into it.
 # kb.nvim loads on VeryLazy, so force it in first — else :KBBrief isn't defined
 # yet at -c time (E492).
-exec nvim -c 'botright vsplit | terminal claude' -c 'wincmd h' -c 'Lazy! load kb.nvim' -c 'KBBrief'
+exec nvim -c 'botright vsplit | terminal claude' -c 'wincmd h' \
+  -c 'lua require("lazy").load({plugins={"kb.nvim"}})' -c 'KBBrief'
