@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
-# sb — open the second-brain layout in one command:
-#   nvim (in the secondbrain dir) with a Claude Code pane split to the right.
-# Claude runs inside nvim's :terminal, so $NVIM is exported to it and the nvim
-# integration (nvim-open, live reload, etc.) needs no socket hunting.
+# sb — open the second brain in one command: a single nvim window in the
+# secondbrain dir. No Claude pane.
 set -euo pipefail
 
 dir="${SECONDBRAIN:-$HOME/Documents/secondbrain}"
 [[ -d "$dir" ]] || { echo "sb: no such dir: $dir (set \$SECONDBRAIN to override)" >&2; exit 1; }
 cd "$dir"
 
-# botright vsplit -> full-height pane on the right; run claude there; focus editor.
-exec nvim -c 'botright vsplit | terminal claude' -c 'wincmd h'
+exec nvim
