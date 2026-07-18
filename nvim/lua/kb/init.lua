@@ -404,6 +404,102 @@ function M.graph(name)
   end)
 end
 
+-- ---------------------------------------------------------------------------
+-- REASON seam — :KBAsk. The query verbs report; they don't reason. :KBAsk pulls
+-- a question-relevant slice of the graph off the M3, hands it to `claude -p`
+-- locally, and renders the answer in a kb://ask panel. Graph is the data,
+-- Claude is the synthesis the verbs can't do.
+-- ---------------------------------------------------------------------------
+
+-- Project tags the graph uses (see query_graph `tags`). A question naming one
+-- pulls that project's open items + bottlenecks into the context bundle.
+local KB_PROJECTS = {
+  "NTA", "DCC", "Paradigm", "TBS", "Diotima", "ADAPT", "FutureBusiness", "DFB", "aurum",
+}
+
+-- Cap the context handed to Claude so a big project (NTA ~500 open items) can't
+-- blow up latency. Generous, but bounded.
+local ASK_CONTEXT_LIMIT = 120000
+
+-- Compose the command that gathers the slice. Always the brief; a named project
+-- adds its open items + bottlenecks; otherwise the curated focus list. Verbs are
+-- chained with `### <verb>` markers so Claude can tell the sections apart.
+local function ask_slice_cmd(question)
+  local ql = question:lower()
+  local verbs = { { "brief" } }
+  local named = {}
+  for _, p in ipairs(KB_PROJECTS) do
+    if ql:find(p:lower(), 1, true) then
+      verbs[#verbs + 1] = { "open", p }
+      verbs[#verbs + 1] = { "bottlenecks", "--project", p }
+      named[#named + 1] = p
+    end
+  end
+  if #named == 0 then
+    verbs[#verbs + 1] = { "focus" }
+  end
+  local parts = {}
+  for _, v in ipairs(verbs) do
+    local remote = "python3 " .. M.config.query
+    for _, tok in ipairs(v) do
+      remote = remote .. " " .. shq(tok)
+    end
+    parts[#parts + 1] = "echo '### " .. table.concat(v, " ") .. "'; " .. remote
+  end
+  local remote_all = table.concat(parts, "; echo; ")
+  if M.config.is_local then
+    return { "sh", "-c", remote_all }, named
+  end
+  return { "ssh", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes", M.config.host, remote_all }, named
+end
+
+-- Ask a free-text question. Two async hops: gather the slice (M3), then reason
+-- (`claude -p`, local). cwd=~ so Claude loads the global writing-style directives
+-- but not this project's CLAUDE.md, keeping the answer focused on the graph.
+function M.ask(question)
+  local home = vim.fn.expand("~")
+  arg_or_prompt(question, "Ask the knowledge graph: ", function(q)
+    vim.notify("kb: gathering graph context …", vim.log.levels.INFO)
+    local cmd, named = ask_slice_cmd(q)
+    local scope = #named > 0 and table.concat(named, ", ") or "brief + focus"
+    vim.system(cmd, { text = true }, function(res)
+      local ctx = vim.trim((res.stdout or "") .. "\n" .. (res.stderr or ""))
+      if ctx == "" then ctx = "_(no graph output)_" end
+      if #ctx > ASK_CONTEXT_LIMIT then
+        ctx = ctx:sub(1, ASK_CONTEXT_LIMIT) .. "\n\n[context truncated]"
+      end
+      vim.schedule(function()
+        vim.notify("kb: Claude is reasoning over " .. scope .. " …", vim.log.levels.INFO)
+      end)
+      local prompt = table.concat({
+        "You are Eoin's second-brain analyst. Answer the question using ONLY the",
+        "knowledge-graph context below. Cite specific action items, people,",
+        "projects and dates from the context. Lead with a direct answer, then the",
+        "supporting detail. If the context does not cover the question, say so",
+        "plainly and name what is missing. Write GitHub-flavoured markdown, short",
+        "plain declarative sentences, no em-dashes.",
+        "",
+        "QUESTION: " .. q,
+        "",
+        "GRAPH CONTEXT:",
+        ctx,
+      }, "\n")
+      vim.system({ "claude", "-p", prompt }, { text = true, cwd = home }, function(ar)
+        vim.schedule(function()
+          local answer = vim.trim(ar.stdout or "")
+          if ar.code ~= 0 or answer == "" then
+            vim.notify("kb: KBAsk failed — " .. vim.trim((ar.stderr or ""):sub(1, 200)), vim.log.levels.ERROR)
+            return
+          end
+          local lines = { "# KBAsk", "", "> " .. q, "", "_scope: " .. scope .. "_", "" }
+          vim.list_extend(lines, vim.split(answer, "\n", { plain = true }))
+          open_scratch("ask", lines)
+        end)
+      end)
+    end)
+  end)
+end
+
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
   M.config.dir = vim.g.kb_dir or M.config.dir
@@ -452,6 +548,8 @@ function M.setup(opts)
   c("KBBottlenecks", function(a) M.bottlenecks(a.args) end, { nargs = "?", desc = "KB: who's blocking [project]" })
   c("KBBrokers", function(a) M.brokers(a.args) end, { nargs = "?", desc = "KB: who bridges clusters [project]" })
   c("KBInsights", function(a) M.insights(a.args) end, { nargs = "?", desc = "KB: insight digest [project]" })
+  -- reason (graph slice → claude -p → buffer)
+  c("KBAsk", function(a) M.ask(a.args) end, { nargs = "?", desc = "KB: ask Claude over graph slices" })
 
   -- buffer-local wikilink follow inside the mirror
   vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {

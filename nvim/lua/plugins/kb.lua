@@ -42,6 +42,8 @@ return {
       { "<leader>kn", "<cmd>KBStale<cr>", desc = "KB: stale nudge" },
       { "<leader>kf", "<cmd>KBFocus<cr>", desc = "KB: focus list" },
       { "<leader>kx", "<cmd>KBDone<cr>", desc = "KB: mark done (writes M3)" },
+      -- reason (Claude over graph slices)
+      { "<leader>ka", "<cmd>KBAsk<cr>", desc = "KB: ask (Claude over graph)" },
     },
   },
 }
