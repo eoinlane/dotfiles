@@ -500,6 +500,90 @@ function M.ask(question)
   end)
 end
 
+-- Gather the person's slice: what each owes the other, next-meeting prep, and
+-- history. Same verb-chaining shape as ask_slice_cmd.
+local function draft_slice_cmd(person)
+  local verbs = { "context", "prep", "history" }
+  local parts = {}
+  for _, verb in ipairs(verbs) do
+    parts[#parts + 1] = "echo '### " .. verb .. "'; python3 " .. M.config.query
+      .. " " .. verb .. " " .. shq(person)
+  end
+  local remote_all = table.concat(parts, "; echo; ")
+  if M.config.is_local then
+    return { "sh", "-c", remote_all }
+  end
+  return { "ssh", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes", M.config.host, remote_all }
+end
+
+-- :KBDraft <person> — draft an email in Eoin's voice from the person's open
+-- threads, render it in kb://draft, and load it onto the clipboard as plain text
+-- (kb-clip --text) ready to paste into Outlook. Same two-hop shape as :KBAsk:
+-- gather the slice on the M3, reason with `claude -p` locally (cwd=~ so the
+-- global writing-style directives apply, not this project's CLAUDE.md).
+function M.draft(person)
+  local home = vim.fn.expand("~")
+  arg_or_prompt(person, "Draft email — person: ", function(who)
+    vim.notify("kb: gathering context for " .. who .. " …", vim.log.levels.INFO)
+    vim.system(draft_slice_cmd(who), { text = true }, function(res)
+      local ctx = vim.trim((res.stdout or "") .. "\n" .. (res.stderr or ""))
+      if ctx == "" then ctx = "_(no graph output)_" end
+      if #ctx > ASK_CONTEXT_LIMIT then
+        ctx = ctx:sub(1, ASK_CONTEXT_LIMIT) .. "\n\n[context truncated]"
+      end
+      vim.schedule(function()
+        vim.notify("kb: Claude is drafting for " .. who .. " …", vim.log.levels.INFO)
+      end)
+      local prompt = table.concat({
+        "You are Eoin Lane drafting a short email to " .. who .. ". Use the",
+        "knowledge-graph context below: what each of you owes the other, recent",
+        "meetings, open threads. Write the email Eoin would send: a concise",
+        "follow-up covering the open items and clear next steps.",
+        "",
+        "Voice and rules:",
+        "- Eoin's plain declarative voice. Short sentences.",
+        "- No em-dashes. No 'X, not Y' antithesis. No meta-commentary. No AI tells.",
+        "- No marketing fluff and no throat-clearing. Get to the point.",
+        "- Reference only items present in the context. Do not invent facts, dates",
+        "  or commitments. Where Eoin's input is needed, leave a [bracketed] note.",
+        "- Plain-text email body: greeting, tight paragraphs or a short bullet list,",
+        "  sign off as Eoin. Output ONLY the email, with a 'Subject:' line first.",
+        "",
+        "RECIPIENT: " .. who,
+        "",
+        "GRAPH CONTEXT:",
+        ctx,
+      }, "\n")
+      vim.system({ "claude", "-p", prompt }, { text = true, cwd = home }, function(ar)
+        vim.schedule(function()
+          local email = vim.trim(ar.stdout or "")
+          if ar.code ~= 0 or email == "" then
+            vim.notify("kb: KBDraft failed — " .. vim.trim((ar.stderr or ""):sub(1, 200)), vim.log.levels.ERROR)
+            return
+          end
+          local body = vim.split(email, "\n", { plain = true })
+          local tmp = vim.fn.tempname() .. ".md"
+          vim.fn.writefile(body, tmp)
+          local lines = { "# KBDraft — " .. who, "",
+            "_on your clipboard as plain text (kb-clip --text). Edit above, then re-copy if changed._", "" }
+          vim.list_extend(lines, body)
+          open_scratch("draft", lines)
+          -- Load plain text onto the clipboard, ready to paste into Outlook.
+          vim.system({ "kb-clip", "--text", tmp }, { text = true }, function(cr)
+            vim.schedule(function()
+              if cr.code == 0 then
+                vim.notify("kb: draft for " .. who .. " copied to clipboard (plain text)", vim.log.levels.INFO)
+              else
+                vim.notify("kb: draft ready; clipboard copy failed — " .. vim.trim((cr.stderr or ""):sub(1, 140)), vim.log.levels.WARN)
+              end
+            end)
+          end)
+        end)
+      end)
+    end)
+  end)
+end
+
 function M.setup(opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
   M.config.dir = vim.g.kb_dir or M.config.dir
@@ -550,6 +634,8 @@ function M.setup(opts)
   c("KBInsights", function(a) M.insights(a.args) end, { nargs = "?", desc = "KB: insight digest [project]" })
   -- reason (graph slice → claude -p → buffer)
   c("KBAsk", function(a) M.ask(a.args) end, { nargs = "?", desc = "KB: ask Claude over graph slices" })
+  -- compose (person slice → claude -p → email in Eoin's voice → clipboard)
+  c("KBDraft", function(a) M.draft(a.args) end, { nargs = "*", desc = "KB: draft email in Eoin's voice [person]" })
 
   -- buffer-local wikilink follow inside the mirror
   vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {

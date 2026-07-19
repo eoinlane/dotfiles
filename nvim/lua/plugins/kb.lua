@@ -44,6 +44,8 @@ return {
       { "<leader>kx", "<cmd>KBDone<cr>", desc = "KB: mark done (writes M3)" },
       -- reason (Claude over graph slices)
       { "<leader>ka", "<cmd>KBAsk<cr>", desc = "KB: ask (Claude over graph)" },
+      -- compose (email in Eoin's voice → clipboard)
+      { "<leader>ke", "<cmd>KBDraft<cr>", desc = "KB: draft email (Claude)" },
     },
   },
 }
