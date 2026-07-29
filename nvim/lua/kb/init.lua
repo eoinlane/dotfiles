@@ -129,6 +129,16 @@ local function open_scratch(title, lines)
     vim.keymap.set("n", lhs, function() M.panel_enter() end,
       { buffer = buf, desc = "KB: close item / follow link on this line" })
   end
+  -- These panels are read-only, so every editing key produces "E21: Cannot make changes,
+  -- 'modifiable' is off" — an error about buffer mechanics, in a buffer nobody is trying
+  -- to edit. Swallow them and say what the panel actually does instead.
+  for _, lhs in ipairs({ "i", "I", "a", "A", "o", "O", "c", "s", "x", "p", "P", "dd", "r" }) do
+    vim.keymap.set("n", lhs, function()
+      vim.notify("kb: read-only list — Enter closes, u undoes, q closes the panel",
+        vim.log.levels.INFO)
+    end, { buffer = buf, desc = "KB: read-only panel" })
+  end
+  vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = buf, desc = "KB: close panel" })
   return buf
 end
 
@@ -396,17 +406,37 @@ M._closed_stack = {}
 
 -- What <CR> / gx do inside a kb:// panel. A line carrying a closable item closes; anything
 -- else falls through to wikilink navigation, so Enter keeps its meaning on prose lines.
-function M.panel_enter()
-  local line = vim.api.nvim_get_current_line()
-  local closable = line:match("close%%20(%d+)")
+local function closable_on(line)
+  if not line or line:match("%[[xX]%]") then return nil end
+  return line:match("close%%20(%d+)")
     or line:match("close (%d+)")
     or line:match("owes since %d%d%d%d%-%d%d%-%d%d:%s*(.+)$")
     or line:match("%][^:]*:%s*(.+)$")
-  if closable and not line:match("%[[xX]%]") then
+end
+
+-- Enter inside a kb:// panel. Headings and the blank lines between sections are most of
+-- the buffer, so landing on one is the common case, not the exception: instead of failing
+-- there, jump to the next item so Enter always advances the work. Only a line carrying a
+-- [[wikilink]] falls through to navigation.
+function M.panel_enter()
+  local line = vim.api.nvim_get_current_line()
+  if closable_on(line) then
     M.done_line()
-  else
-    M.follow_wikilink()
+    return
   end
+  if line:match("%[%[.-%]%]") then
+    M.follow_wikilink()
+    return
+  end
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local last = vim.api.nvim_buf_line_count(0)
+  for n = row + 1, last do
+    if closable_on(vim.api.nvim_buf_get_lines(0, n - 1, n, false)[1]) then
+      vim.api.nvim_win_set_cursor(0, { n, 0 })
+      return
+    end
+  end
+  vim.notify("kb: no more items below", vim.log.levels.INFO)
 end
 
 -- Undo the last close: reopen in graph.db + drop the durable closure record, and put the
