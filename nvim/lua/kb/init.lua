@@ -253,6 +253,22 @@ end
 function M.focus() run_query("focus", "focus", {}) end
 function M.stale() run_query("stale-nudge", "stale-nudge", {}) end
 
+-- The slip zone: commitments 4+ days old and still open. Anything newer is in flight and
+-- deliberately absent. --list renders instead of prompting (the terminal version is
+-- interactive) and is read-only, so opening the panel never marks anything triaged.
+-- Close the item under the cursor with <leader>kx, same as any other kb:// list.
+function M.triage(proj)
+  if proj and proj ~= "" then
+    run_query("triage:" .. proj, "triage", { "--list", "--project", proj })
+  else
+    run_query("triage", "triage", { "--list" })
+  end
+end
+
+-- What the triage decisions say about the extractor: drop rate, the openers you keep
+-- rejecting, where the noise clusters. Read this before editing TIER_RULE.
+function M.learn() run_query("triage:learn", "triage", { "--learn" }) end
+
 function M.open(proj)
   if proj and proj ~= "" then
     run_query("open:" .. proj, "open", { "--project", proj })
@@ -622,6 +638,9 @@ function M.setup(opts)
   c("KBFocus", M.focus, { desc = "KB: focus list" })
   c("KBStale", M.stale, { desc = "KB: stale-commitment nudge" })
   c("KBOpen", function(a) M.open(a.args) end, { nargs = "?", desc = "KB: open items [project]" })
+  c("KBTriage", function(a) M.triage(a.args) end,
+    { nargs = "?", desc = "KB: slip zone, 4+ days old [project]" })
+  c("KBLearn", M.learn, { desc = "KB: what triage decisions say about extraction" })
   c("KBPrep", function(a) M.prep(a.args) end, { nargs = "?", desc = "KB: prep [person]" })
   c("KBContext", function(a) M.context(a.args) end, { nargs = "?", desc = "KB: context [person]" })
   c("KBHistory", function(a) M.history(a.args) end, { nargs = "?", desc = "KB: history [person]" })

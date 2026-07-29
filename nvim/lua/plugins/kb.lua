@@ -33,6 +33,9 @@ return {
       { "<leader>kr", "<cmd>KBReview<cr>", desc = "KB: weekly review" },
       { "<leader>kS", "<cmd>KBStats<cr>", desc = "KB: graph stats" },
       { "<leader>ko", "<cmd>KBOpen<cr>", desc = "KB: open items" },
+      -- The daily pass. Slip zone only (4+ days old); close under the cursor with kx.
+      { "<leader>kj", "<cmd>KBTriage<cr>", desc = "KB: triage slip zone" },
+      { "<leader>kL", "<cmd>KBLearn<cr>", desc = "KB: what triage taught us" },
       { "<leader>kc", "<cmd>KBContext<cr>", desc = "KB: context (person)" },
       { "<leader>kp", "<cmd>KBPrep<cr>", desc = "KB: prep (person)" },
       { "<leader>kh", "<cmd>KBHistory<cr>", desc = "KB: history (person)" },
