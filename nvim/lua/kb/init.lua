@@ -112,8 +112,14 @@ local function open_scratch(title, lines)
   -- see M.done_line). Buffer-local so it only fires inside kb:// lists.
   vim.keymap.set("n", "<leader>kx", function() M.done_line() end,
     { buffer = buf, desc = "KB: close item on this line" })
-  vim.keymap.set("n", "<leader>ku", function() M.undo_close() end,
-    { buffer = buf, desc = "KB: undo last close" })
+  -- `u` undoes the last CLOSE, not a buffer edit. These panels are read-only, so vim's own
+  -- undo can only ever produce "E21: Cannot make changes, 'modifiable' is off" — a
+  -- confusing error for the one key everybody reaches for after a mistake. Rebinding it to
+  -- the close-undo makes the obvious key do the obvious thing, and removes the E21 entirely.
+  for _, lhs in ipairs({ "u", "<leader>ku" }) do
+    vim.keymap.set("n", lhs, function() M.undo_close() end,
+      { buffer = buf, desc = "KB: undo last close" })
+  end
   -- Pressing the [close] link should close the item, full stop. The mailto: form exists
   -- for the emailed brief on a phone, where there is no query_graph to call; inside a
   -- kb:// panel you are already on the machine that owns graph.db, so handing the line to
