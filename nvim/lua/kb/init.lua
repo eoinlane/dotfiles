@@ -112,6 +112,17 @@ local function open_scratch(title, lines)
   -- see M.done_line). Buffer-local so it only fires inside kb:// lists.
   vim.keymap.set("n", "<leader>kx", function() M.done_line() end,
     { buffer = buf, desc = "KB: close item on this line" })
+  vim.keymap.set("n", "<leader>ku", function() M.undo_close() end,
+    { buffer = buf, desc = "KB: undo last close" })
+  -- Pressing the [close] link should close the item, full stop. The mailto: form exists
+  -- for the emailed brief on a phone, where there is no query_graph to call; inside a
+  -- kb:// panel you are already on the machine that owns graph.db, so handing the line to
+  -- a mail client is pure friction. <CR> and gx both act on the line under the cursor,
+  -- falling back to wikilink navigation when the line holds no item.
+  for _, lhs in ipairs({ "<CR>", "gx" }) do
+    vim.keymap.set("n", lhs, function() M.panel_enter() end,
+      { buffer = buf, desc = "KB: close item / follow link on this line" })
+  end
   return buf
 end
 
@@ -334,9 +345,10 @@ function M.done_line()
     end
     target, label = text, text:sub(1, 72) .. (#text > 72 and "…" or "")
   end
-  if vim.fn.confirm("Close this item?\n  " .. label .. "\nProceed?", "&Yes\n&No", 2) ~= 1 then
-    return
-  end
+  -- No confirmation. A triage pass is dozens of closes, and a modal per item is both the
+  -- friction that stopped it being used and a silent failure mode: the prompt defaulted to
+  -- "No", so Enter or Esc dismissed it and nothing happened, indistinguishable from a
+  -- broken keymap. One keystroke closes; <leader>ku reopens the last one.
   local buf = vim.api.nvim_get_current_buf()
   local row = vim.api.nvim_win_get_cursor(0)[1]
   vim.system(query_cmd("done", { target }), { text = true }, function(res)
@@ -360,7 +372,62 @@ function M.done_line()
         vim.api.nvim_buf_set_lines(buf, row - 1, row, false, {})
         vim.bo[buf].modifiable = was
       end
-      vim.notify("kb: " .. out:sub(1, 120), vim.log.levels.INFO)
+      -- Remember what we just closed so <leader>ku can put it back. Only ids are
+      -- undoable; a text-matched close has no stable handle to reverse.
+      local closed_id = out:match("Closed #(%d+)")
+      if closed_id then
+        table.insert(M._closed_stack, { id = closed_id, line = line, row = row, buf = buf })
+        vim.notify("kb: closed #" .. closed_id .. "  (<leader>ku to undo)", vim.log.levels.INFO)
+      else
+        vim.notify("kb: " .. out:sub(1, 120), vim.log.levels.INFO)
+      end
+    end)
+  end)
+end
+
+-- Stack of closes made this session, most recent last.
+M._closed_stack = {}
+
+-- What <CR> / gx do inside a kb:// panel. A line carrying a closable item closes; anything
+-- else falls through to wikilink navigation, so Enter keeps its meaning on prose lines.
+function M.panel_enter()
+  local line = vim.api.nvim_get_current_line()
+  local closable = line:match("close%%20(%d+)")
+    or line:match("close (%d+)")
+    or line:match("owes since %d%d%d%d%-%d%d%-%d%d:%s*(.+)$")
+    or line:match("%][^:]*:%s*(.+)$")
+  if closable and not line:match("%[[xX]%]") then
+    M.done_line()
+  else
+    M.follow_wikilink()
+  end
+end
+
+-- Undo the last close: reopen in graph.db + drop the durable closure record, and put the
+-- line back where it was. Without this, dropping the confirm prompt would make a stray
+-- keystroke unrecoverable from inside the editor.
+function M.undo_close()
+  local last = table.remove(M._closed_stack)
+  if not last then
+    vim.notify("kb: nothing closed this session to undo", vim.log.levels.WARN)
+    return
+  end
+  vim.system(query_cmd("reopen", { last.id }), { text = true }, function(res)
+    vim.schedule(function()
+      local out = vim.trim((res.stdout or "") .. (res.stderr or ""))
+      if res.code ~= 0 or not out:match("Reopened #") then
+        vim.notify("kb: undo failed — " .. out:sub(1, 200), vim.log.levels.WARN)
+        table.insert(M._closed_stack, last)   -- keep it undoable
+        return
+      end
+      if vim.api.nvim_buf_is_valid(last.buf) then
+        local was = vim.bo[last.buf].modifiable
+        vim.bo[last.buf].modifiable = true
+        local at = math.min(last.row - 1, vim.api.nvim_buf_line_count(last.buf))
+        vim.api.nvim_buf_set_lines(last.buf, at, at, false, { last.line })
+        vim.bo[last.buf].modifiable = was
+      end
+      vim.notify("kb: reopened #" .. last.id, vim.log.levels.INFO)
     end)
   end)
 end
