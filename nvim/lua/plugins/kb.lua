@@ -19,10 +19,14 @@ return {
       "MeanderingProgrammer/render-markdown.nvim",
     },
     event = "VeryLazy",
+    -- `sb` starts nvim with +KBHome, before VeryLazy fires; these load the plugin on demand.
+    cmd = { "KBHome", "KBTriage", "KBBrief", "KBDossier", "KBPrep" },
     config = function()
       require("kb").setup()
     end,
     keys = {
+      -- landing page: today's brief + the slip-zone queue
+      { "<leader>kH", "<cmd>KBHome<cr>", desc = "KB: home (brief + triage)" },
       -- read / browse the KB
       { "<leader>kk", "<cmd>KB<cr>", desc = "KB: find file" },
       { "<leader>kg", "<cmd>KBGrep<cr>", desc = "KB: grep" },
@@ -38,7 +42,8 @@ return {
       { "<leader>kj", "<cmd>KBTriage<cr>", desc = "KB: triage slip zone" },
       { "<leader>kL", "<cmd>KBLearn<cr>", desc = "KB: what triage taught us" },
       { "<leader>kc", "<cmd>KBContext<cr>", desc = "KB: context (person)" },
-      { "<leader>kp", "<cmd>KBPrep<cr>", desc = "KB: prep (person)" },
+      { "<leader>kp", "<cmd>KBPrep<cr>", desc = "KB: dossier + prep (person)" },
+      { "<leader>kD", "<cmd>KBDossier<cr>", desc = "KB: dossier (person)" },
       { "<leader>kh", "<cmd>KBHistory<cr>", desc = "KB: history (person)" },
       { "<leader>ky", "<cmd>KBSynth<cr>", desc = "KB: synthesise (person)" },
       { "<leader>kd", "<cmd>KBDecisions<cr>", desc = "KB: decisions" },

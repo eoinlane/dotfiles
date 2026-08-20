@@ -8,6 +8,9 @@
 #   sb            local if the data is here, else SSH to the M3
 #   sb --local    force local nvim (no data; :KB* commands will say so)
 #
+# Opens on :KBHome (today's brief with the slip-zone queue under it) so the daily pass
+# starts the moment nvim does.
+#
 # Override the host with $SECONDBRAIN_HOST, the dir with $SECONDBRAIN.
 set -euo pipefail
 
@@ -22,4 +25,7 @@ fi
 
 [[ -d "$dir" ]] || { echo "sb: no such dir: $dir (set \$SECONDBRAIN to override)" >&2; exit 1; }
 cd "$dir"
+if has_data; then
+  exec nvim +KBHome
+fi
 exec nvim
