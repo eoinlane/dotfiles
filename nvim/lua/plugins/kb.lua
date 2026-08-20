@@ -20,7 +20,8 @@ return {
     },
     event = "VeryLazy",
     -- `sb` starts nvim with +KBHome, before VeryLazy fires; these load the plugin on demand.
-    cmd = { "KBHome", "KBTriage", "KBBrief", "KBDossier", "KBPrep", "KBAsk", "KBDraft", "KBDeclan" },
+    cmd = { "KBHome", "KBTriage", "KBBrief", "KBDossier", "KBPrep", "KBAsk", "KBDraft", "KBDeclan",
+      "KBPerson", "KBProgram" },
     config = function()
       require("kb").setup()
     end,
@@ -30,7 +31,8 @@ return {
       -- read / browse the KB
       { "<leader>kk", "<cmd>KB<cr>", desc = "KB: find file" },
       { "<leader>kg", "<cmd>KBGrep<cr>", desc = "KB: grep" },
-      { "<leader>kP", "<cmd>KBPerson<cr>", desc = "KB: find person" },
+      { "<leader>kP", "<cmd>KBPerson<cr>", desc = "KB: people (registry, actions)" },
+      { "<leader>kw", "<cmd>KBProgram<cr>", desc = "KB: programmes (registry, actions)" },
       { "<leader>kt", "<cmd>KBTopic<cr>", desc = "KB: find topic" },
       { "<leader>km", "<cmd>KBMeeting<cr>", desc = "KB: find meeting" },
       -- query the graph
