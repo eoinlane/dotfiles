@@ -1,10 +1,25 @@
 #!/usr/bin/env bash
-# sb — open the second brain in one command: a single nvim window in the
-# secondbrain dir. No Claude pane.
+# sb: open the second brain.
+#
+# On the machine that holds the data (the M3: ~/query_graph.py + ~/knowledge_base) this
+# starts nvim in the secondbrain dir. On any other machine it opens the same thing on
+# the M3 over SSH, so there is one front end and it always reads live data.
+#
+#   sb            local if the data is here, else SSH to the M3
+#   sb --local    force local nvim (no data; :KB* commands will say so)
+#
+# Override the host with $SECONDBRAIN_HOST, the dir with $SECONDBRAIN.
 set -euo pipefail
 
+host="${SECONDBRAIN_HOST:-eoin@100.103.128.44}"
 dir="${SECONDBRAIN:-$HOME/Documents/secondbrain}"
+
+has_data() { [[ -r "$HOME/query_graph.py" && -d "$HOME/knowledge_base" ]]; }
+
+if [[ "${1:-}" != "--local" ]] && ! has_data; then
+  exec ssh -t -o ConnectTimeout=10 "$host" '~/.local/bin/sb'
+fi
+
 [[ -d "$dir" ]] || { echo "sb: no such dir: $dir (set \$SECONDBRAIN to override)" >&2; exit 1; }
 cd "$dir"
-
 exec nvim

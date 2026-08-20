@@ -1,12 +1,18 @@
--- kb.nvim — local (in-config) module; front end for the knowledgebase-pipeline.
--- Runs on this M1 Air, points at the DATA on the M3 Air (eoins-m3-air) over Tailscale:
---   READ  : ~/.cache/kb  ← rsync of M3:~/knowledge_base   (:KBSync / <leader>ks)
---   QUERY : ssh M3 python3 ~/query_graph.py <verb>        (live graph.db, single-writer)
--- Module: lua/kb/init.lua. Keys under <leader>k. See secondbrain/CLAUDE.md.
+-- kb.nvim: the nvim front end for knowledgebase-pipeline. Keys under <leader>k.
+--
+-- The module lives in the secondbrain repo (nvim/lua/kb/init.lua), loaded here as a
+-- local plugin. It runs on the machine that holds ~/knowledge_base + ~/query_graph.py
+-- (the M3). On any other machine the commands exist but stop with a hint to run `sb`,
+-- which opens the front end on the M3 over SSH. Single mode since 2026-08-20.
+local sb = vim.fn.expand(vim.env.SECONDBRAIN or "~/Documents/secondbrain")
+if vim.fn.isdirectory(sb .. "/nvim/lua/kb") == 0 then
+  return {}
+end
+
 return {
   {
     "kb.nvim",
-    dir = vim.fn.stdpath("config"),
+    dir = sb .. "/nvim",
     name = "kb.nvim",
     dependencies = {
       "folke/snacks.nvim",
@@ -14,26 +20,21 @@ return {
     },
     event = "VeryLazy",
     config = function()
-      vim.g.kb_dir = vim.g.kb_dir or "~/.cache/kb"
-      vim.g.kb_host = vim.g.kb_host or "eoin@100.103.128.44"
-      vim.g.kb_remote = vim.g.kb_remote or "eoin@100.103.128.44:knowledge_base/"
-      vim.g.kb_query = vim.g.kb_query or "~/query_graph.py"
       require("kb").setup()
     end,
     keys = {
-      -- read / browse the mirror
+      -- read / browse the KB
       { "<leader>kk", "<cmd>KB<cr>", desc = "KB: find file" },
       { "<leader>kg", "<cmd>KBGrep<cr>", desc = "KB: grep" },
       { "<leader>kP", "<cmd>KBPerson<cr>", desc = "KB: find person" },
       { "<leader>kt", "<cmd>KBTopic<cr>", desc = "KB: find topic" },
       { "<leader>km", "<cmd>KBMeeting<cr>", desc = "KB: find meeting" },
-      { "<leader>ks", "<cmd>KBSync<cr>", desc = "KB: sync from M3" },
-      -- query the live graph (M3)
+      -- query the graph
       { "<leader>kb", "<cmd>KBBrief<cr>", desc = "KB: daily brief" },
       { "<leader>kr", "<cmd>KBReview<cr>", desc = "KB: weekly review" },
       { "<leader>kS", "<cmd>KBStats<cr>", desc = "KB: graph stats" },
       { "<leader>ko", "<cmd>KBOpen<cr>", desc = "KB: open items" },
-      -- The daily pass. Slip zone only (4+ days old); close under the cursor with kx.
+      -- The daily pass. Slip zone only (4+ days old); Enter closes, u undoes.
       { "<leader>kj", "<cmd>KBTriage<cr>", desc = "KB: triage slip zone" },
       { "<leader>kL", "<cmd>KBLearn<cr>", desc = "KB: what triage taught us" },
       { "<leader>kc", "<cmd>KBContext<cr>", desc = "KB: context (person)" },
@@ -44,10 +45,10 @@ return {
       { "<leader>kT", "<cmd>KBTags<cr>", desc = "KB: tags" },
       { "<leader>kn", "<cmd>KBStale<cr>", desc = "KB: stale nudge" },
       { "<leader>kf", "<cmd>KBFocus<cr>", desc = "KB: focus list" },
-      { "<leader>kx", "<cmd>KBDone<cr>", desc = "KB: mark done (writes M3)" },
+      { "<leader>kx", "<cmd>KBDone<cr>", desc = "KB: mark done" },
       -- reason (Claude over graph slices)
       { "<leader>ka", "<cmd>KBAsk<cr>", desc = "KB: ask (Claude over graph)" },
-      -- compose (email in Eoin's voice → clipboard)
+      -- compose (email in Eoin's voice to the clipboard)
       { "<leader>ke", "<cmd>KBDraft<cr>", desc = "KB: draft email (Claude)" },
     },
   },
