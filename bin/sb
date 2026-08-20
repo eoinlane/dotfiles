@@ -26,6 +26,15 @@ fi
 [[ -d "$dir" ]] || { echo "sb: no such dir: $dir (set \$SECONDBRAIN to override)" >&2; exit 1; }
 cd "$dir"
 if has_data; then
+  # Over SSH the login keychain is locked (secrets unreadable, exit 36), and Claude Code
+  # keeps its login there, so :KBAsk/:KBDraft would fail with "Not logged in". Unlock it
+  # once per session; the prompt is the Mac login password.
+  if [[ -n "${SSH_CONNECTION:-}" ]] \
+    && ! security find-generic-password -s "Claude Code-credentials" -w >/dev/null 2>&1; then
+    echo "sb: unlocking the login keychain for this SSH session (Claude Code's login lives there)."
+    security unlock-keychain "$HOME/Library/Keychains/login.keychain-db" \
+      || echo "sb: keychain still locked; :KBAsk and :KBDraft will not authenticate in this session." >&2
+  fi
   exec nvim +KBHome
 fi
 exec nvim
