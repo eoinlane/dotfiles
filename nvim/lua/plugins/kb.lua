@@ -20,7 +20,7 @@ return {
     },
     event = "VeryLazy",
     -- `sb` starts nvim with +KBHome, before VeryLazy fires; these load the plugin on demand.
-    cmd = { "KBHome", "KBTriage", "KBBrief", "KBDossier", "KBPrep" },
+    cmd = { "KBHome", "KBTriage", "KBBrief", "KBDossier", "KBPrep", "KBAsk", "KBDraft", "KBDeclan" },
     config = function()
       require("kb").setup()
     end,
@@ -51,10 +51,11 @@ return {
       { "<leader>kn", "<cmd>KBStale<cr>", desc = "KB: stale nudge" },
       { "<leader>kf", "<cmd>KBFocus<cr>", desc = "KB: focus list" },
       { "<leader>kx", "<cmd>KBDone<cr>", desc = "KB: mark done" },
-      -- reason (Claude over graph slices)
-      { "<leader>ka", "<cmd>KBAsk<cr>", desc = "KB: ask (Claude over graph)" },
+      -- reason (Claude picks the query verbs itself, via kb-agent)
+      { "<leader>ka", "<cmd>KBAsk<cr>", desc = "KB: ask (Claude over the graph)" },
       -- compose (email in Eoin's voice to the clipboard)
       { "<leader>ke", "<cmd>KBDraft<cr>", desc = "KB: draft email (Claude)" },
+      { "<leader>kW", "<cmd>KBDeclan<cr>", desc = "KB: weekly Declan update (draft)" },
     },
   },
 }
