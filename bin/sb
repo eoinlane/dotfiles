@@ -5,8 +5,9 @@
 # starts nvim in the secondbrain dir. On any other machine it opens the same thing on
 # the M3 over SSH, so there is one front end and it always reads live data.
 #
-#   sb            local if the data is here, else SSH to the M3
-#   sb --local    force local nvim (no data; :KB* commands will say so)
+#   sb            local if the data is here, else SSH to the M3 (the full front end)
+#   sb --local    nvim on this machine in client mode: verbs run on the M3 over SSH,
+#                 Claude runs here (no keychain unlock), KB files are not available
 #
 # Opens on :KBHome (today's brief with the slip-zone queue under it) so the daily pass
 # starts the moment nvim does.
@@ -25,6 +26,9 @@ fi
 
 [[ -d "$dir" ]] || { echo "sb: no such dir: $dir (set \$SECONDBRAIN to override)" >&2; exit 1; }
 cd "$dir"
+if [[ "${1:-}" == "--local" ]] && ! has_data; then
+  exec nvim +KBHome   # client mode
+fi
 if has_data; then
   # Over SSH the login keychain is locked (secrets unreadable, exit 36), and Claude Code
   # keeps its login there, so :KBAsk/:KBDraft would fail with "Not logged in". Unlock it
