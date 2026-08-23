@@ -5,3 +5,8 @@ default: true
 MD013: false   # line-length — too noisy for prose / wrapped paragraphs
 MD028: false   # no-blanks-blockquote — false-positive on GitHub callouts ([!NOTE] etc.)
 MD033: false   # no-inline-html — we legitimately use <u>…</u> and <br>
+MD060: false   # table-column-style — pipe padding; churn on hand-written tables
+MD022: false   # blanks-around-headings — heading directly on its text is house style
+MD031: false   # blanks-around-fences — same reason
+MD032: false   # blanks-around-lists — same reason
+MD034: false   # no-bare-urls — bare links are fine in notes
