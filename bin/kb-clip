@@ -4,26 +4,40 @@
 #
 # Usage:  kb-clip <file.md>            # rich text (RTF) — formatted paste (default)
 #         kb-clip --text <file.md>     # plain text, reflowable (no hard wraps)
+#         kb-clip --raw <file.md>      # the file byte for byte, no pandoc
 #         kb-clip --html <file.md>     # open an HTML render in the browser
 #                                      #   (best table fidelity: Cmd+A, Cmd+C there)
+#
+# --text runs pandoc with --wrap=none, which joins consecutive lines into one
+# paragraph so the mail client can reflow it. That is right for :KBDraft prose and
+# wrong for anything whose line breaks carry meaning (a signature block, an owner
+# split, an address). Use --raw for those.
 set -euo pipefail
 
 mode=rtf
 case "${1:-}" in
   --text) mode=text; shift ;;
+  --raw) mode=raw; shift ;;
   --html) mode=html; shift ;;
 esac
 
 file="${1:-}"
-[[ -n "$file" ]] || { echo "usage: kb-clip [--text|--html] <file.md>" >&2; exit 2; }
+[[ -n "$file" ]] || { echo "usage: kb-clip [--text|--raw|--html] <file.md>" >&2; exit 2; }
 [[ -f "$file" ]] || { echo "kb-clip: no such file: $file" >&2; exit 1; }
-command -v pandoc >/dev/null || { echo "kb-clip: pandoc not found (brew install pandoc)" >&2; exit 1; }
+# raw is a straight copy; every other mode goes through pandoc
+[[ "$mode" == "raw" ]] || command -v pandoc >/dev/null \
+  || { echo "kb-clip: pandoc not found (brew install pandoc)" >&2; exit 1; }
 
 case "$mode" in
   text)
     # plain text, one line per paragraph so the mail client reflows it
     pandoc -f gfm -t plain --wrap=none "$file" | pbcopy
     echo "✓ copied plain text from $(basename "$file") — paste with Cmd+V (paste before copying anything else)"
+    ;;
+  raw)
+    # verbatim: every line break preserved, no markdown processing
+    pbcopy < "$file"
+    echo "✓ copied $(basename "$file") verbatim ($(grep -c '' "$file") lines) — paste with Cmd+V (paste before copying anything else)"
     ;;
   html)
     out="${TMPDIR:-/tmp}/kb-clip.$$.html"
