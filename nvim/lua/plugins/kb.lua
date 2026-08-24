@@ -21,7 +21,7 @@ return {
     event = "VeryLazy",
     -- `sb` starts nvim with +KBHome, before VeryLazy fires; these load the plugin on demand.
     cmd = { "KBHome", "KBTriage", "KBBrief", "KBDossier", "KBPrep", "KBAsk", "KBDraft", "KBDeclan",
-      "KBPerson", "KBProgram" },
+      "KBPerson", "KBProgram", "KBRegistry" },
     config = function()
       require("kb").setup()
     end,
@@ -39,6 +39,8 @@ return {
       { "<leader>kb", "<cmd>KBBrief<cr>", desc = "KB: daily brief" },
       { "<leader>kr", "<cmd>KBReview<cr>", desc = "KB: weekly review" },
       { "<leader>kS", "<cmd>KBStats<cr>", desc = "KB: graph stats" },
+      -- registry -> repo/folder mapping, with meeting counts. Network-free.
+      { "<leader>kR", "<cmd>KBRegistry<cr>", desc = "KB: registry → repo mapping" },
       { "<leader>ko", "<cmd>KBOpen<cr>", desc = "KB: open items" },
       -- The daily pass. Slip zone only (4+ days old); Enter closes, u undoes.
       { "<leader>kj", "<cmd>KBTriage<cr>", desc = "KB: triage slip zone" },
